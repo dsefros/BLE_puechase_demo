@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.repository.PrerequisitesRepository
 
 class AndroidPrerequisitesRepository(private val context: Context) : PrerequisitesRepository {
@@ -27,6 +28,14 @@ class AndroidPrerequisitesRepository(private val context: Context) : Prerequisit
         val network = connectivityManager?.activeNetwork ?: return false
         val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
         return capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    override fun resolveFailure(): Failure.PrerequisiteFailure? = when {
+        !isBleSupported() -> Failure.PrerequisiteFailure.BleUnsupported
+        !isBluetoothEnabled() -> Failure.PrerequisiteFailure.BluetoothDisabled
+        !hasRequiredPermissions() -> Failure.PrerequisiteFailure.PermissionsDenied
+        !hasInternetConnection() -> Failure.PrerequisiteFailure.NoInternet
+        else -> null
     }
 
     companion object {

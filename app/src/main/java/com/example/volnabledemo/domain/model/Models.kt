@@ -32,28 +32,8 @@ data class VolnaCandidate(
     val rssiFinal: Int,
 )
 
-enum class ScanFailureReason {
-    BleUnsupported,
-    BluetoothDisabled,
-    PermissionsDenied,
-    NoInternet,
-    TerminalNotFound,
-    InvalidPacket,
-}
+data object PrerequisiteResult
 
-enum class PaymentFailureReason {
-    HostTimeout,
-    HostError,
-    InvalidPayload,
-}
+data class ScanResult(val candidate: VolnaCandidate)
 
-sealed interface PaymentFlowState {
-    data object Idle : PaymentFlowState
-    data object CheckingPrerequisites : PaymentFlowState
-    data object Scanning : PaymentFlowState
-    data class ReadyForConfirmation(val candidate: VolnaCandidate) : PaymentFlowState
-    data class PaymentSuccess(val candidate: VolnaCandidate) : PaymentFlowState
-    data class PaymentError(val message: String) : PaymentFlowState
-    data class BlockingError(val message: String) : PaymentFlowState
-    data class SubmittingPayment(val candidate: VolnaCandidate) : PaymentFlowState
-}
+data object PaymentResult
