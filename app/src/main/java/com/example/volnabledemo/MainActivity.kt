@@ -27,75 +27,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.volnabledemo.data.ble.AdvertisementPacketParser
-import com.example.volnabledemo.data.ble.AndroidBleScanner
-import com.example.volnabledemo.data.ble.QrLinkBuilder
-import com.example.volnabledemo.data.ble.ScanResponseParser
-import com.example.volnabledemo.data.ble.SignalStrengthValidator
-import com.example.volnabledemo.data.ble.VolnaCandidateAssembler
-import com.example.volnabledemo.data.network.PaymentApi
-import com.example.volnabledemo.data.repository.PaymentRepositoryImpl
-import com.example.volnabledemo.domain.model.PaymentFlowState
+import com.example.volnabledemo.app.di.AppContainer
+import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.model.VolnaCandidate
-import com.example.volnabledemo.domain.usecase.CheckPrerequisitesUseCase
-import com.example.volnabledemo.domain.usecase.ScanForCandidateUseCase
-import com.example.volnabledemo.domain.usecase.SubmitPaymentUseCase
 import com.example.volnabledemo.platform.AndroidPrerequisitesRepository
+import com.example.volnabledemo.presentation.PaymentFlowState
 import com.example.volnabledemo.presentation.PaymentViewModel
 import com.example.volnabledemo.ui.theme.VolnaBleDemoTheme
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.text.NumberFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+    private val appContainer by lazy { AppContainer(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val json = Json { ignoreUnknownKeys = true }
-        val okHttp = OkHttpClient.Builder()
-            .callTimeout(10, TimeUnit.SECONDS)
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
-            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
-            .build()
-        val paymentApi = Retrofit.Builder()
-            .baseUrl(BuildConfig.PAYMENT_BASE_URL)
-            .client(okHttp)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(PaymentApi::class.java)
-
-        val viewModelFactory = PaymentViewModel.factory(
-            CheckPrerequisitesUseCase(AndroidPrerequisitesRepository(this)),
-            ScanForCandidateUseCase(
-                AndroidBleScanner(
-                    this,
-                    AdvertisementPacketParser(),
-                    ScanResponseParser(),
-                    VolnaCandidateAssembler(
-                        SignalStrengthValidator(BuildConfig.RSSI_THRESHOLD),
-                        QrLinkBuilder(BuildConfig.SBP_PREFIX),
-                    )
-                )
-            ),
-            SubmitPaymentUseCase(PaymentRepositoryImpl(paymentApi))
-        )
-
         setContent {
             VolnaBleDemoTheme {
-                val viewModel: PaymentViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: PaymentViewModel = viewModel(factory = appContainer.paymentViewModelFactory())
                 val state by viewModel.state.collectAsState()
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()
                 ) { granted ->
-                    if (granted.values.all { it }) viewModel.startScan() else viewModel.onPermissionsDenied(AndroidPrerequisitesRepository.permissionDeniedMessage())
+                    if (granted.values.all { it }) viewModel.startScan() else viewModel.onPermissionsDenied()
                 }
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     AppScreen(
@@ -105,6 +61,7 @@ class MainActivity : ComponentActivity() {
                         },
                         onCancel = viewModel::reset,
                         onPay = viewModel::submitPayment,
+                        onAcknowledgeSuccess = viewModel::acknowledgeSuccess,
                     )
                 }
             }
@@ -118,6 +75,7 @@ private fun AppScreen(
     onStartScan: () -> Unit,
     onCancel: () -> Unit,
     onPay: (VolnaCandidate) -> Unit,
+    onAcknowledgeSuccess: () -> Unit,
 ) {
     when (state) {
         PaymentFlowState.Idle -> HomeScreen(onStartScan)
@@ -125,9 +83,9 @@ private fun AppScreen(
         PaymentFlowState.Scanning -> LoadingScreen("Ищем ближайший терминал Волна…")
         is PaymentFlowState.ReadyForConfirmation -> PaymentConfirmScreen(state.candidate, onPay, onCancel)
         is PaymentFlowState.SubmittingPayment -> LoadingScreen("Отправляем demo-платеж…")
-        is PaymentFlowState.PaymentSuccess -> SuccessScreen()
-        is PaymentFlowState.PaymentError -> ErrorScreen(state.message, onCancel)
-        is PaymentFlowState.BlockingError -> ErrorScreen(state.message, onCancel)
+        is PaymentFlowState.PaymentSuccess -> SuccessScreen(onAcknowledgeSuccess)
+        is PaymentFlowState.PaymentError -> ErrorScreen(paymentFailureMessage(state.failure), onCancel)
+        is PaymentFlowState.BlockingError -> ErrorScreen(failureMessage(state.failure), onCancel)
     }
 }
 
@@ -174,11 +132,13 @@ private fun LoadingScreen(message: String) {
 }
 
 @Composable
-private fun SuccessScreen() {
+private fun SuccessScreen(onDone: () -> Unit) {
     ScreenContainer {
         Text("✔", color = Color(0xFF2E7D32), style = MaterialTheme.typography.displayLarge)
         Spacer(Modifier.height(12.dp))
         Text("Demo flow успешно завершен.")
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("На главный экран") }
     }
 }
 
@@ -191,6 +151,24 @@ private fun ErrorScreen(message: String, onBack: () -> Unit) {
         Spacer(Modifier.height(24.dp))
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("На главный экран") }
     }
+}
+
+private fun failureMessage(failure: Failure): String = when (failure) {
+    Failure.PrerequisiteFailure.BleUnsupported -> "Устройство не поддерживает BLE-сканирование."
+    Failure.PrerequisiteFailure.BluetoothDisabled -> "Bluetooth выключен. Включите Bluetooth и повторите попытку."
+    Failure.PrerequisiteFailure.PermissionsDenied -> AndroidPrerequisitesRepository.permissionDeniedMessage()
+    Failure.PrerequisiteFailure.NoInternet -> "Нет подключения к интернету. Повторите попытку после восстановления сети."
+    Failure.ScanFailure.Timeout -> "Терминал не найден за отведенное время."
+    Failure.ScanFailure.HardwareError -> "BLE-сканирование недоступно на этом устройстве."
+    Failure.ScanFailure.InvalidPacket -> "Получен некорректный BLE-пакет."
+    is Failure.PaymentFailure -> paymentFailureMessage(failure)
+}
+
+private fun paymentFailureMessage(failure: Failure.PaymentFailure): String = when (failure) {
+    Failure.PaymentFailure.Network -> "Не удалось отправить demo-платеж из-за сетевой ошибки."
+    Failure.PaymentFailure.HostRejected -> "Хост отклонил demo-платеж."
+    Failure.PaymentFailure.Serialization -> "Ответ сервера не удалось обработать."
+    Failure.PaymentFailure.Unknown -> "Demo-платеж завершился неизвестной ошибкой."
 }
 
 @Composable

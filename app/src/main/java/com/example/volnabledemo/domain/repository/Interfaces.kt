@@ -1,16 +1,19 @@
 package com.example.volnabledemo.domain.repository
 
-import com.example.volnabledemo.domain.model.PaymentFailureReason
+import com.example.volnabledemo.domain.error.Failure
+import com.example.volnabledemo.domain.model.Outcome
+import com.example.volnabledemo.domain.model.PaymentResult
+import com.example.volnabledemo.domain.model.PrerequisiteResult
+import com.example.volnabledemo.domain.model.ScanResult
 import com.example.volnabledemo.domain.model.VolnaCandidate
 import kotlinx.coroutines.flow.Flow
 
 interface BleScanner {
-    fun scanForCandidate(): Flow<Result<VolnaCandidate>>
+    fun scanForCandidate(): Flow<Outcome<ScanResult, Failure.ScanFailure>>
 }
 
 interface PaymentRepository {
-    suspend fun submitPayment(candidate: VolnaCandidate): Result<Unit>
-    fun mapError(throwable: Throwable): PaymentFailureReason
+    suspend fun submitPayment(candidate: VolnaCandidate): Outcome<PaymentResult, Failure.PaymentFailure>
 }
 
 interface PrerequisitesRepository {
@@ -18,4 +21,5 @@ interface PrerequisitesRepository {
     fun isBluetoothEnabled(): Boolean
     fun hasRequiredPermissions(): Boolean
     fun hasInternetConnection(): Boolean
+    fun resolveFailure(): Failure.PrerequisiteFailure?
 }
