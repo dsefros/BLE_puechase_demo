@@ -3,8 +3,8 @@ package com.example.volnabledemo.data.ble
 import java.math.BigInteger
 
 class VolnaQrcIdConverter {
-    private val radix = BigInteger.valueOf(36)
-    private val alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    private val alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    private val radix = BigInteger.valueOf(alphabet.length.toLong())
 
     fun fromBinary(payload: ByteArray): String {
         BleLog.d("BLE_Converter", "Converting QR ID, payload size: ${payload.size}")

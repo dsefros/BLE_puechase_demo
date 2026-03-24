@@ -18,15 +18,20 @@ import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PaymentRepositoryImplTest {
-    private val candidate = VolnaCandidate("QRC1", "https://qr.nspk.ru/QRC1", 1000, "Store", -50, -52)
+    private val mixedCaseQrcId = "KDtpuFqqhiJfXyFQqjGzMtIG4NOPIgsd"
+    private val candidate = VolnaCandidate(mixedCaseQrcId, "https://qr.nspk.ru/$mixedCaseQrcId", 1000, "Store", -50, -52)
 
     @Test
     fun `returns success when sbp confirmation returns 2xx`() = runTest {
-        val repository = PaymentRepositoryImpl(FakePaymentApi(confirmResponse = Response.success(Unit)))
+        val fakeApi = FakePaymentApi(confirmResponse = Response.success(Unit))
+        val repository = PaymentRepositoryImpl(fakeApi)
 
         val result = repository.submitPayment(candidate)
 
         assertThat(result).isEqualTo(Outcome.Success(com.example.volnabledemo.domain.model.PaymentResult))
+        assertThat(fakeApi.lastConfirmationUrl).isEqualTo(
+            "https://beta-ecom.payment-guide.ru/api/internal/sbp/pay/$mixedCaseQrcId"
+        )
     }
 
     @Test
@@ -76,6 +81,9 @@ class PaymentRepositoryImplTest {
         private val confirmResponse: Response<Unit>? = null,
         private val confirmException: Exception? = null,
     ) : PaymentApi {
+        var lastConfirmationUrl: String? = null
+            private set
+
         override suspend fun submitPayment(request: com.example.volnabledemo.data.network.PaymentRequestDto): PaymentResponseDto {
             return PaymentResponseDto(success = true)
         }
@@ -86,6 +94,7 @@ class PaymentRepositoryImplTest {
             statusCode: String,
             statusMessage: String,
         ): Response<Unit> {
+            lastConfirmationUrl = url
             confirmException?.let { throw it }
             return confirmResponse ?: Response.success(Unit)
         }
