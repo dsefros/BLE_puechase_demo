@@ -1,6 +1,12 @@
 package com.example.volnabledemo
 
+
 import android.os.Bundle
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -37,6 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,7 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -72,7 +79,7 @@ import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
 
-private val BrandOrange = Color(0xFFFF5B00)
+private val BrandOrange = Color(0xFF176FC6)
 private val BrandBlack = Color(0xFF000000)
 private val BrandGray = Color(0xFFD7E6EA)
 private val BrandLightGray = Color(0xFFE9F1F3)
@@ -80,7 +87,7 @@ private val BrandDarkGray = Color(0xFF2C2C2C)
 private val BrandBlue = Color(0xFF176FC6)
 private val BrandGreen = Color(0xFF27B648)
 private val BrandRed = Color(0xFFEA002F)
-private val ScreenBg = Color(0xFFF7F8F8)
+private val ScreenBg = Color(0xCCEBEBEB)
 private val White = Color(0xFFFFFFFF)
 
 class MainActivity : ComponentActivity() {
@@ -178,43 +185,43 @@ private fun HomeScreen(
     onStartScan: () -> Unit
 ) {
     BrandScreen(showTopo = true) {
-        SomersWordmark()
-
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = "Добро пожаловать!",
-            fontSize = 28.sp,
+            fontSize = 24.sp,
             lineHeight = 32.sp,
             fontWeight = FontWeight.Black,
             color = BrandBlack,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(34.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
+        // Кнопка сканирования - кликабельный оранжевый круг с иконкой Bluetooth
         WaveCircle(
             coreColor = BrandOrange,
-            waveColor = BrandGray,
-            content = { SomersMark() }
+            waveColor = BrandBlue,
+            onClick = onStartScan,
+            content = {
+                Icon(
+                    painter = painterResource(id = R.drawable.bt_icon), // имя вашего файла без расширения
+                    contentDescription = "Bluetooth",
+                    modifier = Modifier.size(52.dp),
+                    tint = White
+                )
+            }
         )
 
-        Spacer(modifier = Modifier.height(38.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         Text(
-            text = "Для получения операции нажмите\nна кнопку Начать сканирование BLE.",
-            fontSize = 17.sp,
+            text = "Нажмите на кнопку Bluetooth\nдля начала сканирования",
+            fontSize = 16.sp,
             lineHeight = 24.sp,
             fontWeight = FontWeight.Normal,
             color = BrandBlack,
             textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(30.dp))
-
-        PrimaryButton(
-            text = "Начать сканирование BLE",
-            onClick = onStartScan
         )
     }
 }
@@ -223,58 +230,80 @@ private fun HomeScreen(
 private fun ScanningScreen(
     onCancel: () -> Unit
 ) {
-    BrandScreen(showTopo = true) {
-        Text(
-            text = "Подождите, пожалуйста",
-            fontSize = 28.sp,
-            lineHeight = 32.sp,
-            fontWeight = FontWeight.Black,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ScreenBg)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        // Фоновые элементы
+        TopoBackground(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.28f)
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        // Основной контент по центру
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Пожалуйста, подождите",
+                fontSize = 24.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.Black,
+                color = BrandBlack,
+                textAlign = TextAlign.Center,
+                maxLines = 1
 
-        WaveCircle(
-            coreColor = BrandOrange,
-            waveColor = BrandGray,
-            showOrbitDots = true,
-            content = {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(44.dp),
-                    color = White,
-                    strokeWidth = 3.dp
-                )
-            }
-        )
+            )
 
-        Spacer(modifier = Modifier.height(42.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
-        Text(
-            text = "сканирование...",
-            fontSize = 18.sp,
-            letterSpacing = 0.8.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
-        )
+            WaveCircle(
+                coreColor = BrandBlue,
+                waveColor = BrandBlue,
+                showOrbitDots = true,
+                content = {
+                },
+                onClick = {}
+            )
 
-        Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(42.dp))
 
-        Text(
-            text = "Поиск может занять до 10 секунд",
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandDarkGray,
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = "сканирование...",
+                fontSize = 16.sp,
+                letterSpacing = 0.8.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandBlack,
+                textAlign = TextAlign.Center
+            )
 
-        Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-        SecondaryButton(
+            Text(
+                text = "Поиск может занять до 10 секунд",
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandDarkGray,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // Кнопка отмены внизу экрана (как на HomeScreen)
+        PrimaryButton(
             text = "Отмена",
-            onClick = onCancel
+            onClick = onCancel,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 28.dp, vertical = 18.dp)
         )
     }
 }
@@ -284,7 +313,7 @@ private fun SubmittingPaymentScreen() {
     BrandScreen(showTopo = true) {
         Text(
             text = "Подождите, пожалуйста",
-            fontSize = 28.sp,
+            fontSize = 24.sp,
             lineHeight = 32.sp,
             fontWeight = FontWeight.Black,
             color = BrandBlack,
@@ -303,7 +332,8 @@ private fun SubmittingPaymentScreen() {
                     color = White,
                     strokeWidth = 3.dp
                 )
-            }
+            },
+            onClick = {}
         )
 
         Spacer(modifier = Modifier.height(42.dp))
@@ -348,20 +378,22 @@ private fun PaymentConfirmScreen(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onCancel() }
+                modifier = Modifier
+                    .padding(vertical = 12.dp)  // увеличивает область нажатия
             ) {
-                Text(
-                    text = "←",
-                    fontSize = 28.sp,
-                    color = BrandBlack
-                )
+                IconButton(
+                    modifier = Modifier.size(28.dp),
+                    onClick = onCancel,
+                ) {
+                    Icon(  imageVector = Icons.Default.ArrowBack, contentDescription = null)
+                }
 
-                Spacer(modifier = Modifier.width(14.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Text(
                     text = "Оплатить",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = BrandBlack
                 )
             }
@@ -424,7 +456,8 @@ private fun SuccessScreen(
                     fontWeight = FontWeight.Bold,
                     color = White
                 )
-            }
+            },
+            onClick = {}
         )
 
         Spacer(modifier = Modifier.height(40.dp))
@@ -470,32 +503,72 @@ private fun ErrorScreen(
     message: String,
     onBack: () -> Unit
 ) {
-    BrandScreen(showTopo = true) {
-        Text(
-            text = title,
-            fontSize = 30.sp,
-            lineHeight = 34.sp,
-            fontWeight = FontWeight.Black,
-            color = BrandRed,
-            textAlign = TextAlign.Center
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ScreenBg)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        TopoBackground(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.28f)
         )
 
-        Spacer(modifier = Modifier.height(26.dp))
+        // Основной контент по центру
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = title,
+                fontSize = 30.sp,
+                lineHeight = 34.sp,
+                fontWeight = FontWeight.Black,
+                color = BrandRed,
+                textAlign = TextAlign.Center
+            )
 
-        Text(
-            text = message,
-            fontSize = 17.sp,
-            lineHeight = 24.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
-        )
+            Spacer(modifier = Modifier.height(64.dp))
 
-        Spacer(modifier = Modifier.height(34.dp))
+            WaveCircle(
+                coreColor = BrandRed,
+                waveColor = BrandRed,
+                showOrbitDots = false,
+                content = {
+                    Text(
+                        text = "!",
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = White
+                    )
+                },
+                onClick = {}
+            )
 
+            Spacer(modifier = Modifier.height(42.dp))
+
+            Text(
+                text = message,
+                fontSize = 17.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandBlack,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // Кнопка внизу экрана
         PrimaryButton(
             text = "На главный экран",
-            onClick = onBack
+            onClick = onBack,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 28.dp, vertical = 18.dp)
         )
     }
 }
@@ -656,6 +729,7 @@ private fun WaveCircle(
     coreColor: Color,
     waveColor: Color,
     showOrbitDots: Boolean = false,
+    onClick: (() -> Unit),
     content: @Composable BoxScope.() -> Unit
 ) {
     val infinite = rememberInfiniteTransition(label = "waves")
@@ -690,7 +764,10 @@ private fun WaveCircle(
     )
 
     Box(
-        modifier = Modifier.size(270.dp),
+        modifier = Modifier
+            .size(270.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -698,7 +775,7 @@ private fun WaveCircle(
             val baseRadius = size.minDimension * 0.20f
 
             drawCircle(
-                color = waveColor.copy(alpha = 0.70f),
+                color = waveColor.copy(alpha = 0.50f),
                 radius = baseRadius * wave1 * 1.75f,
                 center = center,
                 style = Stroke(width = 2.4.dp.toPx())
@@ -768,16 +845,16 @@ private fun TopoBackground(
             for (i in 0..steps) {
                 val t = (i.toFloat() / steps.toFloat()) * (Math.PI * 2.0)
                 val x = (
-                    cx +
-                        ((rx + (kotlin.math.sin(t * 3.0 + phase.toDouble()) * wobble).toFloat()) *
-                            kotlin.math.cos(t).toFloat())
-                    )
+                        cx +
+                                ((rx + (sin(t * 3.0 + phase.toDouble()) * wobble).toFloat()) *
+                                        cos(t).toFloat())
+                        )
 
                 val y = (
-                    cy +
-                        ((ry + (kotlin.math.cos(t * 4.0 + phase.toDouble()) * wobble * 0.85).toFloat()) *
-                            kotlin.math.sin(t).toFloat())
-                    )
+                        cy +
+                                ((ry + (cos(t * 4.0 + phase.toDouble()) * wobble * 0.85).toFloat()) *
+                                        sin(t).toFloat())
+                        )
 
                 if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
@@ -842,7 +919,7 @@ private fun failureMessage(failure: Failure): String = when (failure) {
         "Нет подключения к интернету. Повторите попытку после восстановления сети."
 
     Failure.ScanFailure.Timeout ->
-        "Терминал не найден за отведённое время."
+        "BLE пакет не найден."
 
     Failure.ScanFailure.HardwareError ->
         "BLE-сканирование недоступно на этом устройстве."
