@@ -18,11 +18,41 @@ import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PaymentRepositoryImplTest {
-    private val candidate = VolnaCandidate("QRC1", "https://qr.nspk.ru/QRC1", 1000, "Store", -50, -52)
+    private val mixedCaseQrcId = "KDtpuFqqhiJfXyFQqjGzMtIG4NOPIgsd"
+    private val candidate = VolnaCandidate(mixedCaseQrcId, "https://qr.nspk.ru/$mixedCaseQrcId", 1000, "Store", -50, -52)
+
+    @Test
+    fun `returns success when sbp confirmation returns 2xx`() = runTest {
+        val fakeApi = FakePaymentApi(confirmResponse = Response.success(Unit))
+        val repository = PaymentRepositoryImpl(fakeApi)
+
+        val result = repository.submitPayment(candidate)
+
+        assertThat(result).isEqualTo(Outcome.Success(com.example.volnabledemo.domain.model.PaymentResult))
+        assertThat(fakeApi.lastConfirmationUrl).isEqualTo(
+            "https://beta-ecom.payment-guide.ru/api/internal/sbp/pay/$mixedCaseQrcId"
+        )
+    }
 
     @Test
     fun `maps http 400 to host rejected`() = runTest {
-        val repository = PaymentRepositoryImpl(FakePaymentApi { throw httpException(400) })
+        val repository = PaymentRepositoryImpl(FakePaymentApi(confirmException = httpException(400)))
+
+        val result = repository.submitPayment(candidate)
+
+        assertThat(result).isEqualTo(Outcome.FailureResult(Failure.PaymentFailure.HostRejected))
+    }
+
+    @Test
+    fun `maps non 2xx confirmation response to host rejected`() = runTest {
+        val repository = PaymentRepositoryImpl(
+            FakePaymentApi(
+                confirmResponse = Response.error(
+                    409,
+                    "conflict".toResponseBody("application/json".toMediaType())
+                )
+            )
+        )
 
         val result = repository.submitPayment(candidate)
 
@@ -31,7 +61,7 @@ class PaymentRepositoryImplTest {
 
     @Test
     fun `maps http 500 to network`() = runTest {
-        val repository = PaymentRepositoryImpl(FakePaymentApi { throw httpException(500) })
+        val repository = PaymentRepositoryImpl(FakePaymentApi(confirmException = httpException(500)))
 
         val result = repository.submitPayment(candidate)
 
@@ -40,7 +70,7 @@ class PaymentRepositoryImplTest {
 
     @Test
     fun `maps io exception to network`() = runTest {
-        val repository = PaymentRepositoryImpl(FakePaymentApi { throw IOException("offline") })
+        val repository = PaymentRepositoryImpl(FakePaymentApi(confirmException = IOException("offline")))
 
         val result = repository.submitPayment(candidate)
 
@@ -48,9 +78,26 @@ class PaymentRepositoryImplTest {
     }
 
     private class FakePaymentApi(
-        private val block: suspend () -> PaymentResponseDto,
+        private val confirmResponse: Response<Unit>? = null,
+        private val confirmException: Exception? = null,
     ) : PaymentApi {
-        override suspend fun submitPayment(request: com.example.volnabledemo.data.network.PaymentRequestDto): PaymentResponseDto = block()
+        var lastConfirmationUrl: String? = null
+            private set
+
+        override suspend fun submitPayment(request: com.example.volnabledemo.data.network.PaymentRequestDto): PaymentResponseDto {
+            return PaymentResponseDto(success = true)
+        }
+
+        override suspend fun confirmSbpPayment(
+            url: String,
+            status: String,
+            statusCode: String,
+            statusMessage: String,
+        ): Response<Unit> {
+            lastConfirmationUrl = url
+            confirmException?.let { throw it }
+            return confirmResponse ?: Response.success(Unit)
+        }
     }
 
     private fun httpException(code: Int): HttpException = HttpException(
