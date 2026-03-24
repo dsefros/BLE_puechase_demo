@@ -1,7 +1,6 @@
 package com.example.volnabledemo.data.repository
 
 import com.example.volnabledemo.data.network.PaymentApi
-import com.example.volnabledemo.data.network.PaymentRequestDto
 import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.model.Outcome
 import com.example.volnabledemo.domain.model.PaymentResult
@@ -13,15 +12,18 @@ import java.io.IOException
 
 class PaymentRepositoryImpl(private val paymentApi: PaymentApi) : PaymentRepository {
     override suspend fun submitPayment(candidate: VolnaCandidate): Outcome<PaymentResult, Failure.PaymentFailure> = try {
-        val response = paymentApi.submitPayment(
-            PaymentRequestDto(
-                qrcId = candidate.qrcId,
-                qrLink = candidate.qrLink,
-                amountMinor = candidate.amountMinor,
-                merchantName = candidate.merchantName,
-            )
+        val confirmationResponse = paymentApi.confirmSbpPayment(
+            url = "$SBP_CONFIRMATION_URL/${candidate.qrcId}",
+            status = SUCCESS_STATUS,
+            statusCode = SUCCESS_STATUS,
+            statusMessage = SUCCESS_STATUS,
         )
-        if (response.success) Outcome.Success(PaymentResult) else Outcome.FailureResult(Failure.PaymentFailure.HostRejected)
+
+        if (confirmationResponse.isSuccessful) {
+            Outcome.Success(PaymentResult)
+        } else {
+            Outcome.FailureResult(if (confirmationResponse.code() in 400..499) Failure.PaymentFailure.HostRejected else Failure.PaymentFailure.Network)
+        }
     } catch (exception: HttpException) {
         Outcome.FailureResult(
             if (exception.isClientError()) Failure.PaymentFailure.HostRejected else Failure.PaymentFailure.Network
@@ -34,6 +36,11 @@ class PaymentRepositoryImpl(private val paymentApi: PaymentApi) : PaymentReposit
         Outcome.FailureResult(Failure.PaymentFailure.Serialization)
     } catch (_: Exception) {
         Outcome.FailureResult(Failure.PaymentFailure.Unknown)
+    }
+
+    private companion object {
+        const val SBP_CONFIRMATION_URL = "https://beta-ecom.payment-guide.ru/api/internal/sbp/pay"
+        const val SUCCESS_STATUS = "SUCCESS"
     }
 }
 
