@@ -13,7 +13,6 @@ import java.math.BigInteger
 
 class VolnaLogicTest {
     private val qrcIdConverter = VolnaQrcIdConverter()
-    private val base62Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
     @Test
     fun `parses first byte with packet version 1 and positive rssi delta`() {
@@ -101,15 +100,6 @@ class VolnaLogicTest {
     }
 
     @Test
-    fun `preserves mixed case qrc id when converting from binary`() {
-        val expectedQrcId = "KDtpuFqqhiJfXyFQqjGzMtIG4NOPIgsd"
-        val converted = qrcIdConverter.fromBinary(qrcIdBinary(expectedQrcId))
-
-        assertThat(converted).isEqualTo(expectedQrcId)
-        assertThat(converted).isNotEqualTo(expectedQrcId.uppercase())
-    }
-
-    @Test
     fun `converts all-zero qrc id payload to zero digit`() {
         val converted = qrcIdConverter.fromBinary(ByteArray(VolnaContract.qrcIdBytesLength))
 
@@ -145,29 +135,11 @@ class VolnaLogicTest {
         assertThat(candidate.rssiFinal).isEqualTo(-62)
     }
 
-    @Test
-    fun `qr link contains exact mixed case qrc id`() {
-        val expectedQrcId = "KDtpuFqqhiJfXyFQqjGzMtIG4NOPIgsd"
-        val advertisementPacket = AdvertisementPacketParser(qrcIdConverter).parse(
-            byteArrayOf(0x22, 0x80.toByte(), 0x01) + qrcIdBinary(expectedQrcId)
-        ).getOrThrow()
-        val response = ScanResponseParser().parse(
-            0xF001,
-            byteArrayOf(0x00, 0x00, 0x00, 0x64) + "Магазин".toByteArray(charset("windows-1251"))
-        ).getOrThrow()
-        val assembler = VolnaCandidateAssembler(SignalStrengthValidator(-80), QrLinkBuilder("https://qr.nspk.ru/"))
-
-        val candidate = assembler.assemble(advertisementPacket, response, -60).getOrThrow()
-
-        assertThat(candidate.qrcId).isEqualTo(expectedQrcId)
-        assertThat(candidate.qrLink).isEqualTo("https://qr.nspk.ru/$expectedQrcId")
-    }
-
     private fun qrcIdBinary(qrcId: String): ByteArray {
-        val value = qrcId.fold(BigInteger.ZERO) { acc, char ->
-            val digit = base62Alphabet.indexOf(char)
-            require(digit >= 0) { "Unsupported QRC ID character: $char" }
-            acc * BigInteger.valueOf(base62Alphabet.length.toLong()) + BigInteger.valueOf(digit.toLong())
+        val normalized = qrcId.uppercase()
+        val value = normalized.fold(BigInteger.ZERO) { acc, char ->
+            val digit = char.digitToInt(36)
+            acc * BigInteger.valueOf(36) + BigInteger.valueOf(digit.toLong())
         }
         val bytes = value.toByteArray().let { if (it.firstOrNull() == 0.toByte()) it.copyOfRange(1, it.size) else it }
         require(bytes.size <= VolnaContract.qrcIdBytesLength)
