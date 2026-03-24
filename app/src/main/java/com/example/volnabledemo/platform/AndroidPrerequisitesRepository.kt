@@ -6,13 +6,16 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.repository.PrerequisitesRepository
 
 class AndroidPrerequisitesRepository(private val context: Context) : PrerequisitesRepository {
-    override fun isBleSupported(): Boolean = context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)
+
+    override fun isBleSupported(): Boolean =
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)
 
     override fun isBluetoothEnabled(): Boolean {
         val manager = context.getSystemService(BluetoothManager::class.java)
@@ -24,10 +27,10 @@ class AndroidPrerequisitesRepository(private val context: Context) : Prerequisit
     }
 
     override fun hasInternetConnection(): Boolean {
-        val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
-        val network = connectivityManager?.activeNetwork ?: return false
+        val connectivityManager = context.getSystemService(ConnectivityManager::class.java) ?: return false
+        val network = connectivityManager.activeNetwork ?: return false
         val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     override fun resolveFailure(): Failure.PrerequisiteFailure? = when {
@@ -39,16 +42,31 @@ class AndroidPrerequisitesRepository(private val context: Context) : Prerequisit
     }
 
     companion object {
-        fun requiredPermissions(sdkInt: Int = Build.VERSION.SDK_INT): List<String> = if (sdkInt >= Build.VERSION_CODES.S) {
-            listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        /**
+         * Возвращает список разрешений, необходимых для BLE-сканирования,
+         * в зависимости от версии Android
+         */
+        fun requiredPermissions(): List<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ (API 31+) - нужны только Bluetooth разрешения
+            listOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT
+            )
         } else {
-            listOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            // Android 11 и ниже (API 30-) - нужно разрешение на местоположение
+            listOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
         }
 
-        fun permissionDeniedMessage(sdkInt: Int = Build.VERSION.SDK_INT): String = if (sdkInt >= Build.VERSION_CODES.S) {
-            "Для BLE-сканирования нужны разрешения Nearby devices / Bluetooth. Разрешите доступ и повторите попытку."
+        /**
+         * Возвращает сообщение об ошибке при отсутствии разрешений
+         */
+        fun permissionDeniedMessage(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            "Для BLE-сканирования нужны разрешения Nearby devices / Bluetooth. Разрешите доступ в настройках и повторите попытку."
         } else {
-            "Для BLE-сканирования нужно разрешение на геолокацию. Разрешите доступ и повторите попытку."
+            "Для BLE-сканирования нужно разрешение на геолокацию. Разрешите доступ в настройках и повторите попытку."
         }
     }
 }

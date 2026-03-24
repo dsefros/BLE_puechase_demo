@@ -1,6 +1,6 @@
 package com.example.volnabledemo.data.ble
 
-import com.example.volnabledemo.domain.model.VolnaContract
+import android.util.Log
 import java.math.BigInteger
 
 class VolnaQrcIdConverter {
@@ -8,10 +8,16 @@ class VolnaQrcIdConverter {
     private val alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
     fun fromBinary(payload: ByteArray): String {
-        require(payload.size == VolnaContract.qrcIdBytesLength) {
-            "QRC ID must be exactly ${VolnaContract.qrcIdBytesLength} bytes"
+        Log.d("BLE_Converter", "Converting QR ID, payload size: ${payload.size}")
+        Log.d("BLE_Converter", "Payload hex: ${payload.joinToString("") { "%02x".format(it) }}")
+
+        if (payload.isEmpty()) {
+            Log.d("BLE_Converter", "Empty payload, returning empty string")
+            return ""
         }
+
         if (payload.all { it.toInt() == 0 }) {
+            Log.d("BLE_Converter", "All zeros, returning 0")
             return "0"
         }
 
@@ -23,6 +29,8 @@ class VolnaQrcIdConverter {
             value = divRem[0]
         }
 
-        return digits.reverse().toString()
+        val result = digits.reverse().toString()
+        Log.d("BLE_Converter", "Converted result: $result")
+        return result
     }
 }
