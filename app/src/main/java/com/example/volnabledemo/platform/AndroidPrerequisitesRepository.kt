@@ -63,7 +63,7 @@ class AndroidPrerequisitesRepository(private val context: Context) : Prerequisit
         /**
          * Возвращает сообщение об ошибке при отсутствии разрешений
          */
-        fun permissionDeniedMessage(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        fun permissionDeniedMessage(sdkInt: Int = Build.VERSION.SDK_INT): String = if (sdkInt >= Build.VERSION_CODES.S) {
             "Для BLE-сканирования нужны разрешения Nearby devices / Bluetooth. Разрешите доступ в настройках и повторите попытку."
         } else {
             "Для BLE-сканирования нужно разрешение на геолокацию. Разрешите доступ в настройках и повторите попытку."
