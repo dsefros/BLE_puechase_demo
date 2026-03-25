@@ -1,8 +1,6 @@
 package com.example.volnabledemo
 
-import android.net.Uri
 import android.os.Bundle
-import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -37,11 +35,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +49,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -66,7 +69,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.volnabledemo.app.di.AppContainer
 import com.example.volnabledemo.domain.error.Failure
@@ -80,7 +82,6 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
-import androidx.compose.ui.draw.scale
 
 private val BrandOrange = Color(0xFF176FC6)
 private val BrandBlack = Color(0xFF000000)
@@ -137,30 +138,6 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun VideoBackground(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-
-    AndroidView(
-        factory = { ctx ->
-            VideoView(ctx).apply {
-                setVideoURI(Uri.parse("android.resource://${context.packageName}/raw/background_video"))
-                setOnPreparedListener { mediaPlayer ->
-                    mediaPlayer.isLooping = true
-                }
-                start()
-            }
-        },
-        modifier = modifier
-            .fillMaxSize()
-            .scale(1.6f)  // увеличиваем на 20%
-    )
-
-    DisposableEffect(Unit) {
-        onDispose { }
-    }
-}
-
-@Composable
 private fun AppScreen(
     state: PaymentFlowState,
     onStartScan: () -> Unit,
@@ -169,14 +146,16 @@ private fun AppScreen(
     onAcknowledgeSuccess: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        VideoBackground(modifier = Modifier.fillMaxSize())
+        // Анимированный градиентный фон
+        AnimatedGradientBackground(modifier = Modifier.fillMaxSize())
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(OverlayColor)
-                .blur(10.dp)
-        )
+        // Оверлей закомментирован для лучшей видимости анимации
+        // Box(
+        //     modifier = Modifier
+        //         .fillMaxSize()
+        //         .background(OverlayColor)
+        //         .blur(10.dp)
+        // )
 
         Crossfade(
             targetState = state,
@@ -242,7 +221,7 @@ private fun HomeScreenContent(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))  // отступ между заголовком и описанием
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Это приложение для оплаты QR-кодов\nпо технологии Bluetooth Low Energy",
@@ -253,7 +232,7 @@ private fun HomeScreenContent(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(32.dp))  // отступ между описанием и кругом (было 64.dp, уменьшили)
+        Spacer(modifier = Modifier.height(32.dp))
 
         WaveCircle(
             coreColor = BrandOrange,
@@ -472,80 +451,103 @@ private fun SuccessScreenContent(
     onDone: () -> Unit
 ) {
     val formattedAmount = formatAmount(candidate.amountMinor)
+    var progress by remember { mutableFloatStateOf(0f) }
+    val timeoutDuration = 10000L // 10 секунд
 
     LaunchedEffect(Unit) {
-        delay(1800)
-        onDone()
+        val startTime = System.currentTimeMillis()
+        while (true) {
+            val elapsed = System.currentTimeMillis() - startTime
+            if (elapsed >= timeoutDuration) {
+                progress = 1f
+                onDone()
+                break
+            }
+            progress = elapsed.toFloat() / timeoutDuration.toFloat()
+            delay(16)
+        }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 28.dp, vertical = 22.dp)
             .statusBarsPadding()
-            .navigationBarsPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .navigationBarsPadding()
     ) {
-        Text(
-            text = "Одобрено",
-            fontSize = 24.sp,
-            lineHeight = 34.sp,
-            fontWeight = FontWeight.Black,
-            color = BrandGreen,
-            textAlign = TextAlign.Center
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Одобрено",
+                fontSize = 24.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.Black,
+                color = BrandGreen,
+                textAlign = TextAlign.Center
+            )
 
-        Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
-        WaveCircle(
-            coreColor = BrandGreen,
-            waveColor = BrandGray,
-            content = {
-                Text(
-                    text = "✓",
-                    fontSize = 54.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = White
-                )
-            },
-            onClick = {}
-        )
+            WaveCircle(
+                coreColor = BrandGreen,
+                waveColor = BrandGreen,
+                onClick = {},
+                content = {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Успех",
+                        modifier = Modifier.size(52.dp),
+                        tint = White
+                    )
+                }
+            )
 
-        Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
-        Text(
-            text = "оплата",
-            fontSize = 24.sp,
-            letterSpacing = 0.8.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandDarkGray,
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = "оплата",
+                fontSize = 16.sp,
+                letterSpacing = 0.8.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandDarkGray,
+                textAlign = TextAlign.Center
+            )
 
-        Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = formattedAmount,
-            fontSize = 16.sp,
-            lineHeight = 34.sp,
-            fontWeight = FontWeight.Black,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = formattedAmount,
+                fontSize = 24.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.Black,
+                color = BrandBlack,
+                textAlign = TextAlign.Center
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = candidate.merchantName,
-            fontSize = 16.sp,
-            lineHeight = 21.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandDarkGray,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = BrandGreen,
+                trackColor = Color(0xFFE0E0E0)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Возврат на главный экран...",
+                fontSize = 12.sp,
+                color = BrandDarkGray
+            )
+        }
     }
 }
 
@@ -713,14 +715,12 @@ private fun WaveCircle(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        // Оптимизация: выносим отрисовку в отдельный Canvas
         Canvas(
             modifier = Modifier.fillMaxSize(),
             onDraw = {
                 val center = Offset(size.width / 2f, size.height / 2f)
                 val baseRadius = size.minDimension * 0.20f
 
-                // Используем только необходимые вычисления
                 val wave1Radius = baseRadius * wave1 * 1.75f
                 val wave2Radius = baseRadius * wave2 * 2.28f
 
