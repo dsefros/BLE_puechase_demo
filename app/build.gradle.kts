@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+import java.util.Date
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -53,6 +55,22 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+
+            val variantName = name
+            val version = versionName ?: defaultConfig.versionName ?: "1.0"
+
+            val timestamp = SimpleDateFormat("yyyyMMdd-HHmm").format(Date())
+
+
+            output.outputFileName = "VolnaBLE-${version}-${variantName}-${timestamp}.apk"
+        }
+    }
+
 }
 
 dependencies {
