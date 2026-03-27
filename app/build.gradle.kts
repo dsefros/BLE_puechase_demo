@@ -68,6 +68,14 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.0")
     implementation("androidx.media3:media3-ui:1.3.0")
     implementation("com.airbnb.android:lottie-compose:6.4.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.0")
+    implementation("androidx.lifecycle:lifecycle-service:2.8.7")
+    // Для работы с простыми текстовыми ответами
+    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Если у вас уже есть retrofit, убедитесь, что версии совпадают
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
     implementation(composeBom)
     androidTestImplementation(composeBom)

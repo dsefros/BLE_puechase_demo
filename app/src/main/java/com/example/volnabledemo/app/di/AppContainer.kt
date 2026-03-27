@@ -2,6 +2,7 @@ package com.example.volnabledemo.app.di
 
 import android.content.Context
 import com.example.volnabledemo.BuildConfig
+import com.example.volnabledemo.SettingsDataStore
 import com.example.volnabledemo.data.ble.AdvertisementPacketParser
 import com.example.volnabledemo.data.ble.AndroidBleScanner
 import com.example.volnabledemo.data.ble.QrLinkBuilder
@@ -52,6 +53,11 @@ class AppContainer(context: Context) {
             QrLinkBuilder(BuildConfig.SBP_PREFIX),
         ),
     )
+
+    // Добавляем SettingsDataStore
+    val settingsDataStore: SettingsDataStore by lazy {
+        SettingsDataStore(appContext)
+    }
 
     val useCases = UseCases(
         checkPrerequisites = CheckPrerequisitesUseCase(prerequisitesRepository),

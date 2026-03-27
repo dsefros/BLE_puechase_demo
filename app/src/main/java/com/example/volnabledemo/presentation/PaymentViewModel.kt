@@ -55,6 +55,17 @@ class PaymentViewModel(
         }
     }
 
+    /**
+     * Устанавливает кандидата напрямую (например, из уведомления)
+     * Переводит приложение в состояние ReadyForConfirmation
+     */
+    fun setCandidate(candidate: VolnaCandidate) {
+        // Отменяем активные сканирования, чтобы не было конфликтов
+        scanJob?.cancel()
+        submitJob?.cancel()
+        _state.value = PaymentFlowState.ReadyForConfirmation(candidate)
+    }
+
     fun onPermissionsDenied() {
         _state.value = PaymentFlowState.BlockingError(Failure.PrerequisiteFailure.PermissionsDenied)
     }

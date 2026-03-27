@@ -1,6 +1,12 @@
 package com.example.volnabledemo
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -36,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,22 +52,18 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -69,6 +72,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.volnabledemo.app.di.AppContainer
 import com.example.volnabledemo.domain.error.Failure
@@ -78,10 +83,12 @@ import com.example.volnabledemo.presentation.PaymentFlowState
 import com.example.volnabledemo.presentation.PaymentViewModel
 import com.example.volnabledemo.ui.theme.VolnaBleDemoTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
+import com.example.volnabledemo.BleScanService.Companion.EXTRA_BACKGROUND_SCAN
 
 private val BrandOrange = Color(0xFF176FC6)
 private val BrandBlack = Color(0xFF000000)
@@ -94,17 +101,90 @@ private val BrandRed = Color(0xFFEA002F)
 private val White = Color(0xFFFFFFFF)
 private val OverlayColor = Color(0xCCEBEBEB)
 
+// Состояние для навигации между экранами
+sealed class Screen {
+    object Home : Screen()
+    object Settings : Screen()
+}
+
 class MainActivity : ComponentActivity() {
     private val appContainer by lazy { AppContainer(this) }
+
+    // Получаем SettingsDataStore через AppContainer
+    private val settingsDataStore: SettingsDataStore
+        get() = appContainer.settingsDataStore
+
+    // Лаунчер для запроса BLE-разрешений
+    private val blePermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { granted ->
+        val allGranted = granted.values.all { it }
+        android.util.Log.d("MainActivity", "BLE разрешения получены: $allGranted")
+        if (allGranted) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    android.util.Log.d("MainActivity", "Теперь запрашиваем фоновое местоположение")
+                    requestBackgroundLocationPermission()
+                    return@registerForActivityResult
+                }
+            }
+            lifecycleScope.launch {
+                settingsDataStore.setBackgroundScanEnabled(true)
+                startBleScanService(this@MainActivity, true)
+                Toast.makeText(this@MainActivity, "Фоновое сканирование включено", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            android.util.Log.d("MainActivity", "BLE разрешения отклонены")
+            Toast.makeText(this, "Для фонового сканирования нужны разрешения Bluetooth", Toast.LENGTH_LONG).show()
+            lifecycleScope.launch {
+                settingsDataStore.setBackgroundScanEnabled(false)
+            }
+        }
+    }
+
+    // Лаунчер для запроса фонового разрешения
+    private val backgroundLocationLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            android.util.Log.d("MainActivity", "Фоновое разрешение получено")
+            lifecycleScope.launch {
+                settingsDataStore.setBackgroundScanEnabled(true)
+                startBleScanService(this@MainActivity, true)
+                Toast.makeText(this@MainActivity, "Фоновое сканирование включено", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            android.util.Log.d("MainActivity", "Фоновое разрешение отклонено")
+            Toast.makeText(this, "Для фонового сканирования нужно разрешение на местоположение", Toast.LENGTH_LONG).show()
+            lifecycleScope.launch {
+                settingsDataStore.setBackgroundScanEnabled(false)
+            }
+        }
+    }
+
+    // Лаунчер для запроса разрешения на уведомления
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        android.util.Log.d("MainActivity", "Notification permission granted: $isGranted")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        requestNotificationPermission()
+
         setContent {
             VolnaBleDemoTheme {
                 val viewModel: PaymentViewModel = viewModel(factory = appContainer.paymentViewModelFactory())
                 val state by viewModel.state.collectAsState()
+
+                var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -113,6 +193,24 @@ class MainActivity : ComponentActivity() {
                         viewModel.startScan()
                     } else {
                         viewModel.onPermissionsDenied()
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    handleIntent(intent, viewModel)
+
+                    settingsDataStore.getAutoScanOnStartupEnabled().collect { autoScanEnabled ->
+                        if (autoScanEnabled && currentScreen == Screen.Home) {
+                            android.util.Log.d("MainActivity", "Автосканирование включено, запускаем сканирование")
+                            val hasPermissions = AndroidPrerequisitesRepository.requiredPermissions().all { permission ->
+                                ContextCompat.checkSelfPermission(this@MainActivity, permission) == PackageManager.PERMISSION_GRANTED
+                            }
+                            if (hasPermissions) {
+                                viewModel.startScan()
+                            } else {
+                                android.util.Log.d("MainActivity", "Нет разрешений для автосканирования")
+                            }
+                        }
                     }
                 }
 
@@ -130,11 +228,181 @@ class MainActivity : ComponentActivity() {
                         onCancel = viewModel::reset,
                         onPay = viewModel::submitPayment,
                         onAcknowledgeSuccess = viewModel::acknowledgeSuccess,
+                        currentScreen = currentScreen,
+                        onNavigateToSettings = { currentScreen = Screen.Settings },
+                        onBackFromSettings = { currentScreen = Screen.Home },
+                        onRequestBackgroundLocationPermission = { requestBackgroundLocationPermission() },
+                        onRequestPushAccess = { requestPushReceivingPermission() },
+                        onRequestBlePermissions = { requestBlePermissions() }
                     )
                 }
             }
         }
+
+        lifecycleScope.launch {
+            settingsDataStore.getBackgroundScanEnabled().collect { enabled ->
+                android.util.Log.d("MainActivity", "Загружено состояние из DataStore: $enabled")
+                if (enabled) {
+                    if (hasBlePermissions(this@MainActivity)) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            if (ContextCompat.checkSelfPermission(
+                                    this@MainActivity,
+                                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                startBleScanService(this@MainActivity, true)
+                            } else {
+                                requestBackgroundLocationPermission()
+                            }
+                        } else {
+                            startBleScanService(this@MainActivity, true)
+                        }
+                    } else {
+                        requestBlePermissions()
+                    }
+                } else {
+                    stopBleScanService(this@MainActivity)
+                }
+            }
+        }
     }
+
+    override fun onResume() {
+        super.onResume()
+        handleIntent(intent, null)
+    }
+
+    private fun handleIntent(intent: Intent?, viewModel: PaymentViewModel?) {
+        when (intent?.action) {
+            "PAYMENT_FOUND", "PAYMENT_ACTION" -> {
+                android.util.Log.d("MainActivity", "Получен Intent из уведомления: ${intent.action}")
+                val bundle = intent.getBundleExtra(BleScanService.EXTRA_CANDIDATE)
+                if (bundle != null) {
+                    val candidate = VolnaCandidate(
+                        qrcId = bundle.getString(BleScanService.EXTRA_QRC_ID) ?: "",
+                        qrLink = bundle.getString(BleScanService.EXTRA_QR_LINK) ?: "",
+                        amountMinor = bundle.getLong(BleScanService.EXTRA_AMOUNT_MINOR, 0),
+                        merchantName = bundle.getString(BleScanService.EXTRA_MERCHANT_NAME) ?: "",
+                        rssi = bundle.getInt(BleScanService.EXTRA_RSSI, 0),
+                        rssiFinal = bundle.getInt(BleScanService.EXTRA_RSSI_FINAL, 0)
+                    )
+                    android.util.Log.d("MainActivity", "Кандидат получен: ${candidate.merchantName}, сумма: ${candidate.amountMinor}")
+                    viewModel?.setCandidate(candidate)
+                } else {
+                    android.util.Log.e("MainActivity", "Bundle is null в handleIntent!")
+                }
+            }
+            "PAYMENT_SUCCESS" -> {
+                android.util.Log.d("MainActivity", "🎉 Получен PAYMENT_SUCCESS!")
+                Toast.makeText(this, "Оплата успешна!", Toast.LENGTH_LONG).show()
+            }
+            "PAYMENT_FAILED" -> {
+                android.util.Log.d("MainActivity", "❌ Получен PAYMENT_FAILED!")
+                Toast.makeText(this, "Ошибка оплаты", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun requestBackgroundLocationPermission() {
+        android.util.Log.d("MainActivity", "requestBackgroundLocationPermission вызван")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                android.util.Log.d("MainActivity", "Запрашиваем ACCESS_BACKGROUND_LOCATION")
+                backgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            } else {
+                android.util.Log.d("MainActivity", "Разрешение уже есть")
+            }
+        }
+    }
+
+    private fun requestBlePermissions() {
+        android.util.Log.d("MainActivity", "requestBlePermissions вызван")
+        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT
+            )
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        blePermissionsLauncher.launch(permissions)
+    }
+
+    private fun requestPushReceivingPermission() {
+        android.util.Log.d("MainActivity", "requestPushReceivingPermission вызван")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                android.util.Log.d("MainActivity", "Запрашиваем разрешение на уведомления")
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun hasBlePermissions(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+}
+
+fun startBleScanService(context: Context, isBackground: Boolean = false) {
+    android.util.Log.d("BleScanService", "startBleScanService вызван, isBackground=$isBackground")
+
+    val hasBlePerm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+    } else {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+    if (!hasBlePerm) {
+        android.util.Log.e("BleScanService", "Нет BLE разрешений для запуска сервиса")
+        return
+    }
+
+    val intent = Intent(context, BleScanService::class.java).apply {
+        action = BleScanService.ACTION_START_SCAN
+        putExtra(BleScanService.Companion.EXTRA_BACKGROUND_SCAN, isBackground)  // Используем Companion
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        context.startForegroundService(intent)
+        android.util.Log.d("BleScanService", "startForegroundService вызван")
+    } else {
+        context.startService(intent)
+        android.util.Log.d("BleScanService", "startService вызван")
+    }
+}
+
+fun stopBleScanService(context: Context) {
+    android.util.Log.d("BleScanService", "stopBleScanService вызван")
+    val intent = Intent(context, BleScanService::class.java).apply {
+        action = BleScanService.ACTION_STOP_SCAN
+    }
+    context.stopService(intent)
+    android.util.Log.d("BleScanService", "stopService вызван")
 }
 
 @Composable
@@ -144,120 +412,140 @@ private fun AppScreen(
     onCancel: () -> Unit,
     onPay: (VolnaCandidate) -> Unit,
     onAcknowledgeSuccess: () -> Unit,
+    currentScreen: Screen,
+    onNavigateToSettings: () -> Unit,
+    onBackFromSettings: () -> Unit,
+    onRequestBackgroundLocationPermission: () -> Unit,
+    onRequestPushAccess: () -> Unit,
+    onRequestBlePermissions: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // Анимированный градиентный фон
         AnimatedGradientBackground(modifier = Modifier.fillMaxSize())
 
-        // Оверлей закомментирован для лучшей видимости анимации
-        // Box(
-        //     modifier = Modifier
-        //         .fillMaxSize()
-        //         .background(OverlayColor)
-        //         .blur(10.dp)
-        // )
-
-        Crossfade(
-            targetState = state,
-            animationSpec = tween(240),
-            label = "main_crossfade"
-        ) { currentState ->
-            when (currentState) {
-                PaymentFlowState.Idle -> HomeScreenContent(onStartScan = onStartScan)
-
-                PaymentFlowState.CheckingPrerequisites,
-                PaymentFlowState.Scanning -> ScanningScreenContent(onCancel = onCancel)
-
-                is PaymentFlowState.ReadyForConfirmation -> PaymentConfirmScreenContent(
-                    candidate = currentState.candidate,
-                    onPay = onPay,
-                    onCancel = onCancel
-                )
-
-                is PaymentFlowState.SubmittingPayment -> SubmittingPaymentScreenContent()
-
-                is PaymentFlowState.PaymentSuccess -> SuccessScreenContent(
-                    candidate = currentState.candidate,
-                    onDone = onAcknowledgeSuccess
-                )
-
-                is PaymentFlowState.PaymentError -> ErrorScreenContent(
-                    title = "Ошибка оплаты",
-                    message = paymentFailureMessage(currentState.failure),
-                    onBack = onCancel
-                )
-
-                is PaymentFlowState.BlockingError -> ErrorScreenContent(
-                    title = "Ошибка",
-                    message = failureMessage(currentState.failure),
-                    onBack = onCancel
-                )
+        when (currentScreen) {
+            Screen.Home -> {
+                Crossfade(
+                    targetState = state,
+                    animationSpec = tween(240),
+                    label = "main_crossfade"
+                ) { currentState ->
+                    when (currentState) {
+                        PaymentFlowState.Idle -> HomeScreenContent(
+                            onStartScan = onStartScan,
+                            onNavigateToSettings = onNavigateToSettings
+                        )
+                        PaymentFlowState.CheckingPrerequisites,
+                        PaymentFlowState.Scanning -> ScanningScreenContent(onCancel = onCancel)
+                        is PaymentFlowState.ReadyForConfirmation -> PaymentConfirmScreenContent(
+                            candidate = currentState.candidate,
+                            onPay = onPay,
+                            onCancel = onCancel
+                        )
+                        is PaymentFlowState.SubmittingPayment -> SubmittingPaymentScreenContent()
+                        is PaymentFlowState.PaymentSuccess -> SuccessScreenContent(
+                            candidate = currentState.candidate,
+                            onDone = onAcknowledgeSuccess
+                        )
+                        is PaymentFlowState.PaymentError -> ErrorScreenContent(
+                            title = "Ошибка оплаты",
+                            message = paymentFailureMessage(currentState.failure),
+                            onBack = onCancel
+                        )
+                        is PaymentFlowState.BlockingError -> ErrorScreenContent(
+                            title = "Ошибка",
+                            message = failureMessage(currentState.failure),
+                            onBack = onCancel
+                        )
+                    }
+                }
             }
+            Screen.Settings -> SettingsScreen(
+                onBack = onBackFromSettings,
+                onRequestBackgroundLocationPermission = onRequestBackgroundLocationPermission,
+                onRequestBlePermissions = onRequestBlePermissions,
+                onRequestPushAccess = onRequestPushAccess
+            )
         }
     }
 }
 
 @Composable
 private fun HomeScreenContent(
-    onStartScan: () -> Unit
+    onStartScan: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 28.dp, vertical = 22.dp)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 22.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Text(
-            text = "Добро пожаловать!",
-            fontSize = 24.sp,
-            lineHeight = 32.sp,
-            fontWeight = FontWeight.Black,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = "Добро пожаловать!",
+                fontSize = 24.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.Black,
+                color = BrandBlack,
+                textAlign = TextAlign.Center
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Это приложение для оплаты QR-кодов\nпо технологии Bluetooth Low Energy",
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandDarkGray,
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = "Это приложение для оплаты QR-кодов\nпо технологии Bluetooth Low Energy",
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandDarkGray,
+                textAlign = TextAlign.Center
+            )
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-        WaveCircle(
-            coreColor = BrandOrange,
-            waveColor = BrandBlue,
-            onClick = onStartScan,
-            content = {
-                Icon(
-                    painter = painterResource(id = R.drawable.bt_icon),
-                    contentDescription = "Bluetooth",
-                    modifier = Modifier.size(52.dp),
-                    tint = White
-                )
-            }
-        )
+            WaveCircle(
+                coreColor = BrandOrange,
+                waveColor = BrandBlue,
+                onClick = onStartScan,
+                content = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.bt_icon),
+                        contentDescription = "Bluetooth",
+                        modifier = Modifier.size(52.dp),
+                        tint = White
+                    )
+                }
+            )
 
-        Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
-        Text(
-            text = "Нажмите на кнопку Bluetooth\nдля начала сканирования",
-            fontSize = 14.sp,
-            lineHeight = 24.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
-        )
+            Text(
+                text = "Нажмите на кнопку Bluetooth\nдля начала сканирования",
+                fontSize = 14.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandBlack,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        IconButton(
+            onClick = onNavigateToSettings,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Настройки",
+                tint = BrandBlack
+            )
+        }
     }
 }
 
@@ -452,7 +740,7 @@ private fun SuccessScreenContent(
 ) {
     val formattedAmount = formatAmount(candidate.amountMinor)
     var progress by remember { mutableFloatStateOf(0f) }
-    val timeoutDuration = 10000L // 10 секунд
+    val timeoutDuration = 10000L
 
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
