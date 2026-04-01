@@ -1,5 +1,7 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.VolnaBleDemo" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:statusBarColor" tools:targetApi="l">@android:color/transparent</item>
+<resources>
+    <style name="Theme.VolnaBleDemo" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Темные иконки статус-бара -->
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 </resources>
