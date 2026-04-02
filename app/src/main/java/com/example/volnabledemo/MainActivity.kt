@@ -45,7 +45,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,15 +53,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,6 +77,15 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import androidx.compose.material.icons.filled.Close
+import android.os.Build
+import android.view.View
+import android.view.WindowInsetsController
 
 private val BrandOrange = Color(0xFF176FC6)
 private val BrandBlack = Color(0xFF000000)
@@ -92,7 +96,7 @@ private val BrandBlue = Color(0xFF176FC6)
 private val BrandGreen = Color(0xFF27B648)
 private val BrandRed = Color(0xFFEA002F)
 private val White = Color(0xFFFFFFFF)
-private val OverlayColor = Color(0xCCEBEBEB)
+private val OverlayColor = Color(0x80EBEBEB)
 
 class MainActivity : ComponentActivity() {
     private val appContainer by lazy { AppContainer(this) }
@@ -100,6 +104,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Делаем иконки статус-бара темными
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+
+            window.insetsController?.setSystemBarsAppearance(
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS, // Убираем (делаем темные)
+                0
+            )
+        } else {
+            // Android 6-10
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = window.decorView.systemUiVisibility or
+                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        }
 
         setContent {
             VolnaBleDemoTheme {
@@ -147,15 +165,15 @@ private fun AppScreen(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Анимированный градиентный фон
-        AnimatedGradientBackground(modifier = Modifier.fillMaxSize())
+        SmokeBackground(modifier = Modifier.fillMaxSize())  // ← Новая анимация дыма
 
         // Оверлей закомментирован для лучшей видимости анимации
-        // Box(
-        //     modifier = Modifier
-        //         .fillMaxSize()
-        //         .background(OverlayColor)
-        //         .blur(10.dp)
-        // )
+        Box(
+             modifier = Modifier
+                 .fillMaxSize()
+                 .background(OverlayColor)
+                 .blur(10.dp)
+        )
 
         Crossfade(
             targetState = state,
@@ -184,13 +202,15 @@ private fun AppScreen(
                 is PaymentFlowState.PaymentError -> ErrorScreenContent(
                     title = "Ошибка оплаты",
                     message = paymentFailureMessage(currentState.failure),
-                    onBack = onCancel
+                    onBack = onCancel,      // Возврат на главный экран
+                    onRetry = onStartScan   // Повторное сканирование
                 )
 
                 is PaymentFlowState.BlockingError -> ErrorScreenContent(
                     title = "Ошибка",
                     message = failureMessage(currentState.failure),
-                    onBack = onCancel
+                    onBack = onCancel,      // Возврат на главный экран
+                    onRetry = onStartScan   // Повторное сканирование
                 )
             }
         }
@@ -201,6 +221,16 @@ private fun AppScreen(
 private fun HomeScreenContent(
     onStartScan: () -> Unit
 ) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("bluetooth.json")
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = true
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -232,26 +262,34 @@ private fun HomeScreenContent(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        WaveCircle(
-            coreColor = BrandOrange,
-            waveColor = BrandBlue,
-            onClick = onStartScan,
-            content = {
-                Icon(
-                    painter = painterResource(id = R.drawable.bt_icon),
-                    contentDescription = "Bluetooth",
-                    modifier = Modifier.size(52.dp),
-                    tint = White
-                )
-            }
-        )
+        // Lottie кнопка
+        Box(
+            modifier = Modifier
+                .size(380.dp),  // Визуальный размер
+            contentAlignment = Alignment.Center
+        ) {
+            // Анимация на весь визуальный размер
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.fillMaxSize()
+            )
 
-        Spacer(modifier = Modifier.height(64.dp))
+            // Область нажатия (меньше и скругленная)
+            Box(
+                modifier = Modifier
+                    .size(150.dp)  // Меньший размер для нажатия
+                    .clip(CircleShape)
+                    .clickable { onStartScan() }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Нажмите на кнопку Bluetooth\nдля начала сканирования",
+            text = "Нажмите на кнопку\nдля начала сканирования",
             fontSize = 14.sp,
             lineHeight = 24.sp,
             fontWeight = FontWeight.Normal,
@@ -265,6 +303,16 @@ private fun HomeScreenContent(
 private fun ScanningScreenContent(
     onCancel: () -> Unit
 ) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("loader.json")
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = true
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -288,17 +336,22 @@ private fun ScanningScreenContent(
                 maxLines = 1
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            WaveCircle(
-                coreColor = BrandBlue,
-                waveColor = BrandBlue,
-                showOrbitDots = true,
-                onClick = {},
-                content = {}
-            )
+            // Lottie анимация
+            Box(
+                modifier = Modifier
+                    .size(380.dp),  // Размер анимации
+                contentAlignment = Alignment.Center
+            ) {
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Text(
                 text = "Сканирование...",
@@ -316,13 +369,13 @@ private fun ScanningScreenContent(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .padding(horizontal = 28.dp, vertical = 18.dp)
-                .height(64.dp),
-            shape = RoundedCornerShape(32.dp),
+                .height(56.dp),
+            shape = RoundedCornerShape(100.dp),
             colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
         ) {
             Text(
                 text = "Отмена",
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = White
             )
@@ -441,6 +494,7 @@ private fun PaymentConfirmScreenContent(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 28.dp, vertical = 18.dp)
+                .height(56.dp)
         )
     }
 }
@@ -450,20 +504,32 @@ private fun SuccessScreenContent(
     candidate: VolnaCandidate,
     onDone: () -> Unit
 ) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("success.json")
+    )
+
+    // Анимация проигрывается один раз и останавливается на последнем кадре
+    val lottieProgress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = 1,
+        isPlaying = true,
+        speed = 1f
+    )
+
     val formattedAmount = formatAmount(candidate.amountMinor)
-    var progress by remember { mutableFloatStateOf(0f) }
-    val timeoutDuration = 10000L // 10 секунд
+    var progressBarProgress by remember { mutableFloatStateOf(0f) }
+    val timeoutDuration = 10000L
 
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
         while (true) {
             val elapsed = System.currentTimeMillis() - startTime
             if (elapsed >= timeoutDuration) {
-                progress = 1f
+                progressBarProgress = 1f
                 onDone()
                 break
             }
-            progress = elapsed.toFloat() / timeoutDuration.toFloat()
+            progressBarProgress = elapsed.toFloat() / timeoutDuration.toFloat()
             delay(16)
         }
     }
@@ -490,26 +556,23 @@ private fun SuccessScreenContent(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(128.dp))
 
-            WaveCircle(
-                coreColor = BrandGreen,
-                waveColor = BrandGreen,
-                onClick = {},
-                content = {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Успех",
-                        modifier = Modifier.size(52.dp),
-                        tint = White
-                    )
-                }
-            )
+            Box(
+                modifier = Modifier.size(150.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LottieAnimation(
+                    composition = composition,
+                    progress = { lottieProgress },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
             Spacer(modifier = Modifier.height(64.dp))
 
             Text(
-                text = "оплата",
+                text = "Оплата",
                 fontSize = 16.sp,
                 letterSpacing = 0.8.sp,
                 fontWeight = FontWeight.Normal,
@@ -531,7 +594,7 @@ private fun SuccessScreenContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             LinearProgressIndicator(
-                progress = progress,
+                progress = progressBarProgress,
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
                     .height(4.dp)
@@ -555,14 +618,40 @@ private fun SuccessScreenContent(
 private fun ErrorScreenContent(
     title: String,
     message: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,      // Возврат на главный экран (крестик)
+    onRetry: () -> Unit     // Повторное сканирование (кнопка)
 ) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("failed.json")
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = 1,
+        isPlaying = true
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
+        // Крестик в правом верхнем углу
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,  // Или Icons.Default.Clear
+                contentDescription = "На главный экран",
+                tint = BrandDarkGray,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -580,24 +669,22 @@ private fun ErrorScreenContent(
                 maxLines = 1
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            WaveCircle(
-                coreColor = BrandRed,
-                waveColor = BrandRed,
-                showOrbitDots = false,
-                content = {
-                    Text(
-                        text = "!",
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = White
-                    )
-                },
-                onClick = {}
-            )
+            // Lottie анимация
+            Box(
+                modifier = Modifier
+                    .size(250.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Text(
                 text = message,
@@ -609,12 +696,14 @@ private fun ErrorScreenContent(
             )
         }
 
+        // Кнопка "Повторить" внизу
         PrimaryButton(
-            text = "На главный экран",
-            onClick = onBack,
+            text = "Повторить",
+            onClick = onRetry,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 28.dp, vertical = 18.dp)
+                .height(56.dp)
         )
     }
 }
