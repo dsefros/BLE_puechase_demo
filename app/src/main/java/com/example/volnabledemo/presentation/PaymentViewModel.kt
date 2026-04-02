@@ -3,10 +3,10 @@ package com.example.volnabledemo.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.volnabledemo.data.settings.SettingsDataStore
 import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.model.Outcome
 import com.example.volnabledemo.domain.model.VolnaCandidate
+import com.example.volnabledemo.domain.repository.SettingsRepository
 import com.example.volnabledemo.domain.usecase.CheckPrerequisitesUseCase
 import com.example.volnabledemo.domain.usecase.ScanForCandidateUseCase
 import com.example.volnabledemo.domain.usecase.SubmitPaymentUseCase
@@ -23,7 +23,7 @@ class PaymentViewModel(
     private val checkPrerequisitesUseCase: CheckPrerequisitesUseCase,
     private val scanForCandidateUseCase: ScanForCandidateUseCase,
     private val submitPaymentUseCase: SubmitPaymentUseCase,
-    private val settingsDataStore: SettingsDataStore,  // 👈 ДОБАВИТЬ
+    private val settingsDataStore: SettingsRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow<PaymentFlowState>(PaymentFlowState.Idle)
     val state: StateFlow<PaymentFlowState> = _state.asStateFlow()
@@ -187,14 +187,14 @@ class PaymentViewModel(
             checkPrerequisitesUseCase: CheckPrerequisitesUseCase,
             scanForCandidateUseCase: ScanForCandidateUseCase,
             submitPaymentUseCase: SubmitPaymentUseCase,
-            settingsDataStore: SettingsDataStore,
+            settingsDataStore: SettingsRepository,
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T = PaymentViewModel(
                 checkPrerequisitesUseCase,
                 scanForCandidateUseCase,
                 submitPaymentUseCase,
-                settingsDataStore,  // 👈 ДОБАВИТЬ
+                settingsDataStore,
             ) as T
         }
     }

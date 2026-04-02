@@ -4,12 +4,12 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.model.Outcome
 import com.example.volnabledemo.domain.model.PaymentResult
-import com.example.volnabledemo.domain.model.PrerequisiteResult
 import com.example.volnabledemo.domain.model.ScanResult
 import com.example.volnabledemo.domain.model.VolnaCandidate
 import com.example.volnabledemo.domain.repository.BleScanner
 import com.example.volnabledemo.domain.repository.PaymentRepository
 import com.example.volnabledemo.domain.repository.PrerequisitesRepository
+import com.example.volnabledemo.domain.repository.SettingsRepository
 import com.example.volnabledemo.domain.usecase.CheckPrerequisitesUseCase
 import com.example.volnabledemo.domain.usecase.ScanForCandidateUseCase
 import com.example.volnabledemo.domain.usecase.SubmitPaymentUseCase
@@ -20,6 +20,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -100,7 +101,8 @@ class PaymentViewModelTest {
                     gate.await()
                     return Outcome.Success(PaymentResult)
                 }
-            })
+            }),
+            FakeSettingsRepository()
         )
 
         viewModel.submitPayment(candidate)
@@ -120,8 +122,19 @@ class PaymentViewModelTest {
         }),
         SubmitPaymentUseCase(object : PaymentRepository {
             override suspend fun submitPayment(candidate: VolnaCandidate) = Outcome.Success(PaymentResult)
-        })
+        }),
+        FakeSettingsRepository()
     )
+
+    private class FakeSettingsRepository(initialAutoScanEnabled: Boolean = false) : SettingsRepository {
+        private val state = MutableStateFlow(initialAutoScanEnabled)
+
+        override val isAutoScanEnabled: Flow<Boolean> = state
+
+        override suspend fun setAutoScanEnabled(enabled: Boolean) {
+            state.value = enabled
+        }
+    }
 
     private fun testPrerequisitesRepository() = object : PrerequisitesRepository {
         override fun isBleSupported() = true
