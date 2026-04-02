@@ -23,11 +23,14 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
+import com.example.volnabledemo.data.settings.SettingsDataStore
 
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
+    val settingsDataStore by lazy { SettingsDataStore(appContext) }
     private val json = Json { ignoreUnknownKeys = true }
+
     private val okHttp = OkHttpClient.Builder()
         .callTimeout(10, TimeUnit.SECONDS)
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -63,6 +66,7 @@ class AppContainer(context: Context) {
         checkPrerequisitesUseCase = useCases.checkPrerequisites,
         scanForCandidateUseCase = useCases.scanForCandidate,
         submitPaymentUseCase = useCases.submitPayment,
+        settingsDataStore = settingsDataStore,
     )
 }
 

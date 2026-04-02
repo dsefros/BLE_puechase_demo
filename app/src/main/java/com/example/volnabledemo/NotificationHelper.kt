@@ -23,11 +23,6 @@ object NotificationHelper {
     private const val NOTIFICATION_ID_SUCCESS = 1002
     private const val NOTIFICATION_ID_ERROR = 1003
 
-    // Actions для Intent
-    const val ACTION_PAYMENT_FOUND = "PAYMENT_FOUND"
-    const val ACTION_PAYMENT_SUCCESS = "PAYMENT_SUCCESS"
-    const val ACTION_PAYMENT_FAILED = "PAYMENT_FAILED"
-
     /**
      * Создание канала уведомлений (для Android 8+)
      */

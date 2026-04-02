@@ -3,6 +3,7 @@ package com.example.volnabledemo.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.volnabledemo.data.settings.SettingsDataStore
 import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.model.Outcome
 import com.example.volnabledemo.domain.model.VolnaCandidate
@@ -16,14 +17,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class PaymentViewModel(
     private val checkPrerequisitesUseCase: CheckPrerequisitesUseCase,
     private val scanForCandidateUseCase: ScanForCandidateUseCase,
     private val submitPaymentUseCase: SubmitPaymentUseCase,
+    private val settingsDataStore: SettingsDataStore,  // 👈 ДОБАВИТЬ
 ) : ViewModel() {
     private val _state = MutableStateFlow<PaymentFlowState>(PaymentFlowState.Idle)
     val state: StateFlow<PaymentFlowState> = _state.asStateFlow()
+
+    // Настройка автосканирования
+    private val _isAutoScanEnabled = MutableStateFlow(false)
+    val isAutoScanEnabled: StateFlow<Boolean> = _isAutoScanEnabled.asStateFlow()
 
     // Канал для отправки уведомлений
     private val _notificationEvent = MutableSharedFlow<NotificationEvent>()
@@ -31,6 +38,54 @@ class PaymentViewModel(
 
     private var scanJob: Job? = null
     private var submitJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            settingsDataStore.isAutoScanEnabled.collect { enabled ->
+                _isAutoScanEnabled.value = enabled
+            }
+        }
+    }
+
+    fun onAppStart() {
+        viewModelScope.launch {
+            val enabled = settingsDataStore.isAutoScanEnabled.first()
+            android.util.Log.d("PaymentViewModel", "onAppStart: autoScanEnabled = $enabled")
+            if (enabled) {
+                startScan()
+            }
+        }
+    }
+
+    fun toggleAutoScan(enabled: Boolean) {
+        viewModelScope.launch {
+            android.util.Log.d("PaymentViewModel", "toggleAutoScan: $enabled")
+            settingsDataStore.setAutoScanEnabled(enabled)
+
+            if (enabled) {
+                // Если включили - запускаем сканирование
+                startScan()
+            } else {
+                // Если выключили - останавливаем сканирование и сбрасываем состояние
+                stopScan()
+            }
+        }
+    }
+
+    fun stopScan() {
+        android.util.Log.d("PaymentViewModel", "stopScan called")
+        scanJob?.cancel()
+        scanJob = null
+        submitJob?.cancel()
+        submitJob = null
+        if (_state.value is PaymentFlowState.Scanning ||
+            _state.value is PaymentFlowState.CheckingPrerequisites ||
+            _state.value is PaymentFlowState.ReadyForConfirmation) {
+            _state.value = PaymentFlowState.Idle
+            // Если автосканирование выключено, после остановки ничего не делаем
+            // Если включено - не перезапускаем, т.к. это ручная остановка
+        }
+    }
 
     fun startScan() {
         if (scanJob?.isActive == true) return
@@ -53,7 +108,6 @@ class PaymentViewModel(
                 when (result) {
                     is Outcome.Success -> {
                         _state.value = PaymentFlowState.ReadyForConfirmation(result.value.candidate)
-                        // Отправляем уведомление о найденном терминале
                         sendNotification(NotificationEvent.CandidateFound(result.value.candidate))
                     }
                     is Outcome.FailureResult -> {
@@ -78,12 +132,10 @@ class PaymentViewModel(
             when (val result = submitPaymentUseCase(candidate)) {
                 is Outcome.Success -> {
                     _state.value = PaymentFlowState.PaymentSuccess(candidate)
-                    // Отправляем уведомление об успешной оплате
                     sendNotification(NotificationEvent.PaymentSuccess(candidate))
                 }
                 is Outcome.FailureResult -> {
                     _state.value = PaymentFlowState.PaymentError(result.reason)
-                    // Отправляем уведомление об ошибке оплаты
                     sendNotification(NotificationEvent.PaymentError(
                         merchantName = candidate.merchantName,
                         amountMinor = candidate.amountMinor,
@@ -99,6 +151,12 @@ class PaymentViewModel(
     fun acknowledgeSuccess() {
         if (_state.value is PaymentFlowState.PaymentSuccess) {
             _state.value = PaymentFlowState.Idle
+            // После возврата на главный экран, если автосканирование включено - перезапускаем
+            viewModelScope.launch {
+                if (_isAutoScanEnabled.value) {
+                    startScan()
+                }
+            }
         }
     }
 
@@ -106,6 +164,12 @@ class PaymentViewModel(
         scanJob?.cancel()
         submitJob?.cancel()
         _state.value = PaymentFlowState.Idle
+        // После сброса (отмена сканирования или ошибка), если автосканирование включено - перезапускаем
+        viewModelScope.launch {
+            if (_isAutoScanEnabled.value) {
+                startScan()
+            }
+        }
     }
 
     private suspend fun sendNotification(event: NotificationEvent) {
@@ -123,12 +187,14 @@ class PaymentViewModel(
             checkPrerequisitesUseCase: CheckPrerequisitesUseCase,
             scanForCandidateUseCase: ScanForCandidateUseCase,
             submitPaymentUseCase: SubmitPaymentUseCase,
+            settingsDataStore: SettingsDataStore,
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T = PaymentViewModel(
                 checkPrerequisitesUseCase,
                 scanForCandidateUseCase,
                 submitPaymentUseCase,
+                settingsDataStore,  // 👈 ДОБАВИТЬ
             ) as T
         }
     }
