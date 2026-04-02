@@ -10,8 +10,10 @@ import com.example.volnabledemo.domain.usecase.CheckPrerequisitesUseCase
 import com.example.volnabledemo.domain.usecase.ScanForCandidateUseCase
 import com.example.volnabledemo.domain.usecase.SubmitPaymentUseCase
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -22,6 +24,10 @@ class PaymentViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow<PaymentFlowState>(PaymentFlowState.Idle)
     val state: StateFlow<PaymentFlowState> = _state.asStateFlow()
+
+    // Канал для отправки уведомлений
+    private val _notificationEvent = MutableSharedFlow<NotificationEvent>()
+    val notificationEvent = _notificationEvent.asSharedFlow()
 
     private var scanJob: Job? = null
     private var submitJob: Job? = null
@@ -45,8 +51,14 @@ class PaymentViewModel(
 
             scanForCandidateUseCase().collect { result ->
                 when (result) {
-                    is Outcome.Success -> _state.value = PaymentFlowState.ReadyForConfirmation(result.value.candidate)
-                    is Outcome.FailureResult -> _state.value = PaymentFlowState.BlockingError(result.reason)
+                    is Outcome.Success -> {
+                        _state.value = PaymentFlowState.ReadyForConfirmation(result.value.candidate)
+                        // Отправляем уведомление о найденном терминале
+                        sendNotification(NotificationEvent.CandidateFound(result.value.candidate))
+                    }
+                    is Outcome.FailureResult -> {
+                        _state.value = PaymentFlowState.BlockingError(result.reason)
+                    }
                 }
                 scanJob = null
             }
@@ -64,8 +76,20 @@ class PaymentViewModel(
         submitJob = viewModelScope.launch {
             _state.value = PaymentFlowState.SubmittingPayment(candidate)
             when (val result = submitPaymentUseCase(candidate)) {
-                is Outcome.Success -> _state.value = PaymentFlowState.PaymentSuccess(candidate)
-                is Outcome.FailureResult -> _state.value = PaymentFlowState.PaymentError(result.reason)
+                is Outcome.Success -> {
+                    _state.value = PaymentFlowState.PaymentSuccess(candidate)
+                    // Отправляем уведомление об успешной оплате
+                    sendNotification(NotificationEvent.PaymentSuccess(candidate))
+                }
+                is Outcome.FailureResult -> {
+                    _state.value = PaymentFlowState.PaymentError(result.reason)
+                    // Отправляем уведомление об ошибке оплаты
+                    sendNotification(NotificationEvent.PaymentError(
+                        merchantName = candidate.merchantName,
+                        amountMinor = candidate.amountMinor,
+                        errorMessage = result.reason.toString()
+                    ))
+                }
             }
         }.also { job ->
             job.invokeOnCompletion { if (submitJob === job) submitJob = null }
@@ -82,6 +106,16 @@ class PaymentViewModel(
         scanJob?.cancel()
         submitJob?.cancel()
         _state.value = PaymentFlowState.Idle
+    }
+
+    private suspend fun sendNotification(event: NotificationEvent) {
+        _notificationEvent.emit(event)
+    }
+
+    sealed class NotificationEvent {
+        data class CandidateFound(val candidate: VolnaCandidate) : NotificationEvent()
+        data class PaymentSuccess(val candidate: VolnaCandidate) : NotificationEvent()
+        data class PaymentError(val merchantName: String, val amountMinor: Long, val errorMessage: String) : NotificationEvent()
     }
 
     companion object {

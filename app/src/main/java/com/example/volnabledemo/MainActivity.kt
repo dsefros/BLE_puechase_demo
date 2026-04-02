@@ -1,6 +1,12 @@
 package com.example.volnabledemo
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -36,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -64,7 +71,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.volnabledemo.app.di.AppContainer
 import com.example.volnabledemo.domain.error.Failure
 import com.example.volnabledemo.domain.model.VolnaCandidate
@@ -73,19 +86,11 @@ import com.example.volnabledemo.presentation.PaymentFlowState
 import com.example.volnabledemo.presentation.PaymentViewModel
 import com.example.volnabledemo.ui.theme.VolnaBleDemoTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
-import androidx.compose.material.icons.filled.Close
-import android.os.Build
-import android.view.View
-import android.view.WindowInsetsController
 
 private val BrandOrange = Color(0xFF176FC6)
 private val BrandBlack = Color(0xFF000000)
@@ -105,15 +110,19 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Создаем канал уведомлений
+        NotificationHelper.createNotificationChannel(this)
+
+        // Запрашиваем разрешение на уведомления (Android 13+)
+        requestNotificationPermission()
+
         // Делаем иконки статус-бара темными
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+
             window.insetsController?.setSystemBarsAppearance(
-                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS, // Убираем (делаем темные)
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                 0
             )
         } else {
-            // Android 6-10
             @Suppress("DEPRECATION")
             window.decorView.systemUiVisibility = window.decorView.systemUiVisibility or
                     View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
@@ -123,6 +132,34 @@ class MainActivity : ComponentActivity() {
             VolnaBleDemoTheme {
                 val viewModel: PaymentViewModel = viewModel(factory = appContainer.paymentViewModelFactory())
                 val state by viewModel.state.collectAsState()
+
+                // Подписываемся на события уведомлений
+                LaunchedEffect(Unit) {
+                    viewModel.notificationEvent.collect { event ->
+                        when (event) {
+                            is PaymentViewModel.NotificationEvent.CandidateFound -> {
+                                NotificationHelper.showCandidateNotification(
+                                    this@MainActivity,
+                                    event.candidate
+                                )
+                            }
+                            is PaymentViewModel.NotificationEvent.PaymentSuccess -> {
+                                NotificationHelper.showSuccessNotification(
+                                    this@MainActivity,
+                                    event.candidate
+                                )
+                            }
+                            is PaymentViewModel.NotificationEvent.PaymentError -> {
+                                NotificationHelper.showErrorNotification(
+                                    this@MainActivity,
+                                    event.merchantName,
+                                    event.amountMinor,
+                                    event.errorMessage
+                                )
+                            }
+                        }
+                    }
+                }
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -153,6 +190,21 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -165,14 +217,14 @@ private fun AppScreen(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Анимированный градиентный фон
-        SmokeBackground(modifier = Modifier.fillMaxSize())  // ← Новая анимация дыма
+        SmokeBackground(modifier = Modifier.fillMaxSize())
 
-        // Оверлей закомментирован для лучшей видимости анимации
+        // Оверлей
         Box(
-             modifier = Modifier
-                 .fillMaxSize()
-                 .background(OverlayColor)
-                 .blur(10.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .background(OverlayColor)
+                .blur(10.dp)
         )
 
         Crossfade(
@@ -202,15 +254,15 @@ private fun AppScreen(
                 is PaymentFlowState.PaymentError -> ErrorScreenContent(
                     title = "Ошибка оплаты",
                     message = paymentFailureMessage(currentState.failure),
-                    onBack = onCancel,      // Возврат на главный экран
-                    onRetry = onStartScan   // Повторное сканирование
+                    onBack = onCancel,
+                    onRetry = onStartScan
                 )
 
                 is PaymentFlowState.BlockingError -> ErrorScreenContent(
                     title = "Ошибка",
                     message = failureMessage(currentState.failure),
-                    onBack = onCancel,      // Возврат на главный экран
-                    onRetry = onStartScan   // Повторное сканирование
+                    onBack = onCancel,
+                    onRetry = onStartScan
                 )
             }
         }
@@ -264,23 +316,20 @@ private fun HomeScreenContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Lottie кнопка
         Box(
             modifier = Modifier
-                .size(380.dp),  // Визуальный размер
+                .size(380.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Анимация на весь визуальный размер
             LottieAnimation(
                 composition = composition,
                 progress = { progress },
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Область нажатия (меньше и скругленная)
             Box(
                 modifier = Modifier
-                    .size(150.dp)  // Меньший размер для нажатия
+                    .size(150.dp)
                     .clip(CircleShape)
                     .clickable { onStartScan() }
             )
@@ -338,10 +387,9 @@ private fun ScanningScreenContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lottie анимация
             Box(
                 modifier = Modifier
-                    .size(380.dp),  // Размер анимации
+                    .size(380.dp),
                 contentAlignment = Alignment.Center
             ) {
                 LottieAnimation(
@@ -508,7 +556,6 @@ private fun SuccessScreenContent(
         LottieCompositionSpec.Asset("success.json")
     )
 
-    // Анимация проигрывается один раз и останавливается на последнем кадре
     val lottieProgress by animateLottieCompositionAsState(
         composition = composition,
         iterations = 1,
@@ -618,8 +665,8 @@ private fun SuccessScreenContent(
 private fun ErrorScreenContent(
     title: String,
     message: String,
-    onBack: () -> Unit,      // Возврат на главный экран (крестик)
-    onRetry: () -> Unit     // Повторное сканирование (кнопка)
+    onBack: () -> Unit,
+    onRetry: () -> Unit
 ) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.Asset("failed.json")
@@ -637,7 +684,6 @@ private fun ErrorScreenContent(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        // Крестик в правом верхнем углу
         IconButton(
             onClick = onBack,
             modifier = Modifier
@@ -645,7 +691,7 @@ private fun ErrorScreenContent(
                 .padding(16.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Close,  // Или Icons.Default.Clear
+                imageVector = Icons.Default.Close,
                 contentDescription = "На главный экран",
                 tint = BrandDarkGray,
                 modifier = Modifier.size(28.dp)
@@ -671,7 +717,6 @@ private fun ErrorScreenContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Lottie анимация
             Box(
                 modifier = Modifier
                     .size(250.dp),
@@ -696,7 +741,6 @@ private fun ErrorScreenContent(
             )
         }
 
-        // Кнопка "Повторить" внизу
         PrimaryButton(
             text = "Повторить",
             onClick = onRetry,
