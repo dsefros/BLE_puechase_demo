@@ -149,12 +149,12 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Версия 1.0.0",
+                            text = "Версия 1.0.0 (by DEfros and EAks)",
                             fontSize = 13.sp,
                             color = Color.Gray
                         )
                         Text(
-                            text = "Оплата QR-кодов по технологии Bluetooth Low Energy",
+                            text = "Somers QR BLE",
                             fontSize = 13.sp,
                             color = Color.Gray
                         )
