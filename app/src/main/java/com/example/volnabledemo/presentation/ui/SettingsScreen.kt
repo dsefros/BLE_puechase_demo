@@ -29,7 +29,7 @@ fun SettingsScreen(
     val isAutoScanEnabled by viewModel.isAutoScanEnabled.collectAsState()
 
     val composition by rememberLottieComposition(
-        LottieCompositionSpec.Asset("backgroundz.json")
+        LottieCompositionSpec.Asset("background.json")
     )
 
     val progress by animateLottieCompositionAsState(

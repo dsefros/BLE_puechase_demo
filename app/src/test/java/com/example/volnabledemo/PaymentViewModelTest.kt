@@ -123,7 +123,7 @@ class PaymentViewModelTest {
         SubmitPaymentUseCase(object : PaymentRepository {
             override suspend fun submitPayment(candidate: VolnaCandidate) = Outcome.Success(PaymentResult)
         }),
-        FakeSettingsRepository()
+        settingsDataStore = FakeSettingsRepository()
     )
 
     private class FakeSettingsRepository(initialAutoScanEnabled: Boolean = false) : SettingsRepository {

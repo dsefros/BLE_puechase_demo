@@ -11,7 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -47,7 +47,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,7 +68,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -95,6 +93,10 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+
 
 private val BrandOrange = Color(0xFF176FC6)
 private val BrandBlack = Color(0xFF000000)
@@ -181,25 +183,34 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.Transparent
                 ) {
-                    if (showSettings) {
-                        SettingsScreen(
-                            viewModel = viewModel,
-                            onBack = { showSettings = false }
-                        )
-                    } else {
-                        AppScreen(
-                            state = state,
-                            isAutoScanEnabled = isAutoScanEnabled,  // 👈 ДОБАВИТЬ ЭТУ СТРОКУ
-                            onStartScan = {
-                                permissionLauncher.launch(
-                                    AndroidPrerequisitesRepository.requiredPermissions().toTypedArray()
-                                )
-                            },
-                            onCancel = viewModel::reset,
-                            onPay = viewModel::submitPayment,
-                            onAcknowledgeSuccess = viewModel::acknowledgeSuccess,
-                            onOpenSettings = { showSettings = true }
-                        )
+                    AnimatedContent(
+                        targetState = showSettings,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(200)) togetherWith
+                                    fadeOut(animationSpec = tween(150))
+                        },
+                        label = "settings_transition"
+                    ) { isShowingSettings ->
+                        if (isShowingSettings) {
+                            SettingsScreen(
+                                viewModel = viewModel,
+                                onBack = { showSettings = false }
+                            )
+                        } else {
+                            AppScreen(
+                                state = state,
+                                isAutoScanEnabled = isAutoScanEnabled,
+                                onStartScan = {
+                                    permissionLauncher.launch(
+                                        AndroidPrerequisitesRepository.requiredPermissions().toTypedArray()
+                                    )
+                                },
+                                onCancel = viewModel::reset,
+                                onPay = viewModel::submitPayment,
+                                onAcknowledgeSuccess = viewModel::acknowledgeSuccess,
+                                onOpenSettings = { showSettings = true }
+                            )
+                        }
                     }
                 }
             }
@@ -225,7 +236,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppScreen(
     state: PaymentFlowState,
-    isAutoScanEnabled: Boolean,  // 👈 ДОБАВИТЬ параметр
+    isAutoScanEnabled: Boolean,
     onStartScan: () -> Unit,
     onCancel: () -> Unit,
     onPay: (VolnaCandidate) -> Unit,
@@ -242,22 +253,67 @@ private fun AppScreen(
                 .blur(10.dp)
         )
 
-        Crossfade(
+        AnimatedContent(
             targetState = state,
-            animationSpec = tween(240),
-            label = "main_crossfade"
+            transitionSpec = {
+                // Разные анимации для разных переходов
+                when {
+                    // Idle -> Scanning (вход с масштабом)
+                    targetState is PaymentFlowState.Scanning &&
+                            initialState is PaymentFlowState.Idle ->
+                        fadeIn(animationSpec = tween(300)) +
+                                scaleIn(initialScale = 0.9f, animationSpec = tween(300)) togetherWith
+                                fadeOut(animationSpec = tween(200)) +
+                                scaleOut(targetScale = 0.95f, animationSpec = tween(200))
+
+                    // Scanning -> ReadyForConfirmation (вход снизу)
+                    targetState is PaymentFlowState.ReadyForConfirmation ->
+                        slideInVertically(
+                            initialOffsetY = { it },
+                            animationSpec = tween(350, easing = FastOutSlowInEasing)
+                        ) + fadeIn(tween(300)) togetherWith
+                                fadeOut(tween(200)) +
+                                scaleOut(targetScale = 0.98f, animationSpec = tween(200))
+
+                    // PaymentSuccess -> Idle (плавное затухание)
+                    targetState is PaymentFlowState.Idle &&
+                            initialState is PaymentFlowState.PaymentSuccess ->
+                        fadeIn(animationSpec = tween(500)) togetherWith
+                                fadeOut(animationSpec = tween(400))
+
+                    // Error -> Idle (сдвиг влево)
+                    targetState is PaymentFlowState.Idle &&
+                            (initialState is PaymentFlowState.PaymentError ||
+                                    initialState is PaymentFlowState.BlockingError) ->
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) togetherWith
+                                slideOutHorizontally(
+                                    targetOffsetX = { it },
+                                    animationSpec = tween(300)
+                                )
+
+                    // Default анимация (для всех остальных случаев)
+                    else ->
+                        fadeIn(animationSpec = tween(250)) togetherWith
+                                fadeOut(animationSpec = tween(150))
+                }.using(SizeTransform(clip = false))
+            },
+            label = "screen_transition"
         ) { currentState ->
             when (currentState) {
                 PaymentFlowState.Idle -> HomeScreenContent(
                     onStartScan = onStartScan,
-                    onOpenSettings = onOpenSettings
+                    onOpenSettings = onOpenSettings,
+                    isAutoScanEnabled = isAutoScanEnabled
                 )
 
                 PaymentFlowState.CheckingPrerequisites,
                 PaymentFlowState.Scanning -> ScanningScreenContent(
                     onCancel = onCancel,
-                    onOpenSettings = onOpenSettings,  // 👈 ДОБАВИТЬ
-                    isAutoScanEnabled = isAutoScanEnabled  // 👈 ДОБАВИТЬ
+                    onOpenSettings = onOpenSettings,
+                    isAutoScanEnabled = isAutoScanEnabled
                 )
 
                 is PaymentFlowState.ReadyForConfirmation -> PaymentConfirmScreenContent(
@@ -294,7 +350,8 @@ private fun AppScreen(
 @Composable
 private fun HomeScreenContent(
     onStartScan: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    isAutoScanEnabled: Boolean
 ) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.Asset("bluetooth.json")
@@ -504,6 +561,17 @@ private fun ScanningScreenContent(
 
 @Composable
 private fun SubmittingPaymentScreenContent() {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("loader.json")
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = true,
+        speed = 1f
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -522,23 +590,20 @@ private fun SubmittingPaymentScreenContent() {
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(32.dp))
+        Box(
+            modifier = Modifier
+                .size(380.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
-        WaveCircle(
-            coreColor = BrandOrange,
-            waveColor = BrandGray,
-            showOrbitDots = true,
-            content = {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(44.dp),
-                    color = BrandOrange,
-                    strokeWidth = 3.dp
-                )
-            },
-            onClick = {}
-        )
-
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = "отправка платежа...",
@@ -694,15 +759,35 @@ private fun SuccessScreenContent(
 
     val formattedAmount = formatAmount(candidate.amountMinor)
     var progressBarProgress by remember { mutableFloatStateOf(0f) }
-    val timeoutDuration = 10000L
+    val timeoutDuration = 5000L
+
+    var isExiting by remember { mutableStateOf(false) }
+
+    val exitAlpha by animateFloatAsState(
+        targetValue = if (isExiting) 0f else 1f,
+        animationSpec = tween(500),
+        label = "exit_alpha"
+    )
+
+    val exitScale by animateFloatAsState(
+        targetValue = if (isExiting) 0f else 1f,
+        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        label = "exit_scale"
+    )
+
+    LaunchedEffect(Unit) {
+        delay(4500)
+        isExiting = true
+        delay(500)
+        onDone()
+    }
 
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
-        while (true) {
+        while (!isExiting) {
             val elapsed = System.currentTimeMillis() - startTime
             if (elapsed >= timeoutDuration) {
                 progressBarProgress = 1f
-                onDone()
                 break
             }
             progressBarProgress = elapsed.toFloat() / timeoutDuration.toFloat()
@@ -713,6 +798,8 @@ private fun SuccessScreenContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .alpha(exitAlpha)
+            .scale(exitScale)
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
