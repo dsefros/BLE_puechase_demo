@@ -1,7 +1,6 @@
 package com.example.volnabledemo
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -12,7 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -37,15 +36,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -56,6 +58,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,7 +68,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -84,24 +86,27 @@ import com.example.volnabledemo.domain.model.VolnaCandidate
 import com.example.volnabledemo.platform.AndroidPrerequisitesRepository
 import com.example.volnabledemo.presentation.PaymentFlowState
 import com.example.volnabledemo.presentation.PaymentViewModel
+import com.example.volnabledemo.presentation.ui.SettingsScreen
 import com.example.volnabledemo.ui.theme.VolnaBleDemoTheme
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+
 
 private val BrandOrange = Color(0xFF176FC6)
 private val BrandBlack = Color(0xFF000000)
 private val BrandGray = Color(0xFFD7E6EA)
-private val BrandLightGray = Color(0xFFE9F1F3)
 private val BrandDarkGray = Color(0xFF2C2C2C)
-private val BrandBlue = Color(0xFF176FC6)
 private val BrandGreen = Color(0xFF27B648)
 private val BrandRed = Color(0xFFEA002F)
 private val White = Color(0xFFFFFFFF)
 private val OverlayColor = Color(0x80EBEBEB)
+private val BrandLightGray = Color(0xFFE9F1F3)
 
 class MainActivity : ComponentActivity() {
     private val appContainer by lazy { AppContainer(this) }
@@ -110,13 +115,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Создаем канал уведомлений
         NotificationHelper.createNotificationChannel(this)
-
-        // Запрашиваем разрешение на уведомления (Android 13+)
         requestNotificationPermission()
 
-        // Делаем иконки статус-бара темными
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.insetsController?.setSystemBarsAppearance(
                 WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
@@ -132,8 +133,14 @@ class MainActivity : ComponentActivity() {
             VolnaBleDemoTheme {
                 val viewModel: PaymentViewModel = viewModel(factory = appContainer.paymentViewModelFactory())
                 val state by viewModel.state.collectAsState()
+                val isAutoScanEnabled by viewModel.isAutoScanEnabled.collectAsState()
 
-                // Подписываемся на события уведомлений
+                var showSettings by remember { mutableStateOf(false) }
+
+                LaunchedEffect(Unit) {
+                    viewModel.onAppStart()
+                }
+
                 LaunchedEffect(Unit) {
                     viewModel.notificationEvent.collect { event ->
                         when (event) {
@@ -162,30 +169,49 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val permissionLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestMultiplePermissions()
-                ) { granted ->
-                    if (granted.values.all { it }) {
-                        viewModel.startScan()
-                    } else {
-                        viewModel.onPermissionsDenied()
+                    contract = ActivityResultContracts.RequestMultiplePermissions(),
+                    onResult = { granted: Map<String, Boolean> ->
+                        if (granted.values.all { it }) {
+                            viewModel.startScan()
+                        } else {
+                            viewModel.onPermissionsDenied()
+                        }
                     }
-                }
+                )
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Color.Transparent
                 ) {
-                    AppScreen(
-                        state = state,
-                        onStartScan = {
-                            permissionLauncher.launch(
-                                AndroidPrerequisitesRepository.requiredPermissions().toTypedArray()
-                            )
+                    AnimatedContent(
+                        targetState = showSettings,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(200)) togetherWith
+                                    fadeOut(animationSpec = tween(150))
                         },
-                        onCancel = viewModel::reset,
-                        onPay = viewModel::submitPayment,
-                        onAcknowledgeSuccess = viewModel::acknowledgeSuccess,
-                    )
+                        label = "settings_transition"
+                    ) { isShowingSettings ->
+                        if (isShowingSettings) {
+                            SettingsScreen(
+                                viewModel = viewModel,
+                                onBack = { showSettings = false }
+                            )
+                        } else {
+                            AppScreen(
+                                state = state,
+                                isAutoScanEnabled = isAutoScanEnabled,
+                                onStartScan = {
+                                    permissionLauncher.launch(
+                                        AndroidPrerequisitesRepository.requiredPermissions().toTypedArray()
+                                    )
+                                },
+                                onCancel = viewModel::reset,
+                                onPay = viewModel::submitPayment,
+                                onAcknowledgeSuccess = viewModel::acknowledgeSuccess,
+                                onOpenSettings = { showSettings = true }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -210,16 +236,16 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun AppScreen(
     state: PaymentFlowState,
+    isAutoScanEnabled: Boolean,
     onStartScan: () -> Unit,
     onCancel: () -> Unit,
     onPay: (VolnaCandidate) -> Unit,
     onAcknowledgeSuccess: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // Анимированный градиентный фон
         SmokeBackground(modifier = Modifier.fillMaxSize())
 
-        // Оверлей
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -227,16 +253,68 @@ private fun AppScreen(
                 .blur(10.dp)
         )
 
-        Crossfade(
+        AnimatedContent(
             targetState = state,
-            animationSpec = tween(240),
-            label = "main_crossfade"
+            transitionSpec = {
+                // Разные анимации для разных переходов
+                when {
+                    // Idle -> Scanning (вход с масштабом)
+                    targetState is PaymentFlowState.Scanning &&
+                            initialState is PaymentFlowState.Idle ->
+                        fadeIn(animationSpec = tween(300)) +
+                                scaleIn(initialScale = 0.9f, animationSpec = tween(300)) togetherWith
+                                fadeOut(animationSpec = tween(200)) +
+                                scaleOut(targetScale = 0.95f, animationSpec = tween(200))
+
+                    // Scanning -> ReadyForConfirmation (вход снизу)
+                    targetState is PaymentFlowState.ReadyForConfirmation ->
+                        slideInVertically(
+                            initialOffsetY = { it },
+                            animationSpec = tween(350, easing = FastOutSlowInEasing)
+                        ) + fadeIn(tween(300)) togetherWith
+                                fadeOut(tween(200)) +
+                                scaleOut(targetScale = 0.98f, animationSpec = tween(200))
+
+                    // PaymentSuccess -> Idle (плавное затухание)
+                    targetState is PaymentFlowState.Idle &&
+                            initialState is PaymentFlowState.PaymentSuccess ->
+                        fadeIn(animationSpec = tween(500)) togetherWith
+                                fadeOut(animationSpec = tween(400))
+
+                    // Error -> Idle (сдвиг влево)
+                    targetState is PaymentFlowState.Idle &&
+                            (initialState is PaymentFlowState.PaymentError ||
+                                    initialState is PaymentFlowState.BlockingError) ->
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) togetherWith
+                                slideOutHorizontally(
+                                    targetOffsetX = { it },
+                                    animationSpec = tween(300)
+                                )
+
+                    // Default анимация (для всех остальных случаев)
+                    else ->
+                        fadeIn(animationSpec = tween(250)) togetherWith
+                                fadeOut(animationSpec = tween(150))
+                }.using(SizeTransform(clip = false))
+            },
+            label = "screen_transition"
         ) { currentState ->
             when (currentState) {
-                PaymentFlowState.Idle -> HomeScreenContent(onStartScan = onStartScan)
+                PaymentFlowState.Idle -> HomeScreenContent(
+                    onStartScan = onStartScan,
+                    onOpenSettings = onOpenSettings,
+                    isAutoScanEnabled = isAutoScanEnabled
+                )
 
                 PaymentFlowState.CheckingPrerequisites,
-                PaymentFlowState.Scanning -> ScanningScreenContent(onCancel = onCancel)
+                PaymentFlowState.Scanning -> ScanningScreenContent(
+                    onCancel = onCancel,
+                    onOpenSettings = onOpenSettings,
+                    isAutoScanEnabled = isAutoScanEnabled
+                )
 
                 is PaymentFlowState.ReadyForConfirmation -> PaymentConfirmScreenContent(
                     candidate = currentState.candidate,
@@ -271,7 +349,9 @@ private fun AppScreen(
 
 @Composable
 private fun HomeScreenContent(
-    onStartScan: () -> Unit
+    onStartScan: () -> Unit,
+    onOpenSettings: () -> Unit,
+    isAutoScanEnabled: Boolean
 ) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.Asset("bluetooth.json")
@@ -283,74 +363,91 @@ private fun HomeScreenContent(
         isPlaying = true
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 28.dp, vertical = 22.dp)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            text = "Добро пожаловать!",
-            fontSize = 24.sp,
-            lineHeight = 32.sp,
-            fontWeight = FontWeight.Black,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Это приложение для оплаты QR-кодов\nпо технологии Bluetooth Low Energy",
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandDarkGray,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Box(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .size(380.dp),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 22.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            LottieAnimation(
-                composition = composition,
-                progress = { progress },
-                modifier = Modifier.fillMaxSize()
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "Добро пожаловать!",
+                fontSize = 24.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.Black,
+                color = BrandBlack,
+                textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Это приложение для оплаты QR-кодов\nпо технологии Bluetooth Low Energy",
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandDarkGray,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Box(
                 modifier = Modifier
-                    .size(150.dp)
-                    .clip(CircleShape)
-                    .clickable { onStartScan() }
+                    .size(380.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(CircleShape)
+                        .clickable { onStartScan() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Нажмите на кнопку\nдля начала сканирования",
+                fontSize = 14.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandBlack,
+                textAlign = TextAlign.Center
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Нажмите на кнопку\nдля начала сканирования",
-            fontSize = 14.sp,
-            lineHeight = 24.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandBlack,
-            textAlign = TextAlign.Center
-        )
+        IconButton(
+            onClick = onOpenSettings,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 48.dp, end = 16.dp)  // 👈 увеличен отступ сверху
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Настройки",
+                tint = BrandDarkGray
+            )
+        }
     }
 }
 
 @Composable
 private fun ScanningScreenContent(
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onOpenSettings: () -> Unit,
+    isAutoScanEnabled: Boolean
 ) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.Asset("loader.json")
@@ -409,30 +506,72 @@ private fun ScanningScreenContent(
                 color = BrandBlack,
                 textAlign = TextAlign.Center
             )
+
+            // Если автосканирование включено, показываем подсказку
+            if (isAutoScanEnabled) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Автоматическое сканирование активно",
+                    fontSize = 12.sp,
+                    color = BrandDarkGray,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
-        Button(
-            onClick = onCancel,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 28.dp, vertical = 18.dp)
-                .height(56.dp),
-            shape = RoundedCornerShape(100.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
-        ) {
-            Text(
-                text = "Отмена",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = White
-            )
+        // Кнопка Отмена - показываем только если автосканирование ВЫКЛЮЧЕНО
+        if (!isAutoScanEnabled) {
+            Button(
+                onClick = onCancel,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp, vertical = 18.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(100.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+            ) {
+                Text(
+                    text = "Отмена",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = White
+                )
+            }
+        }
+
+        // Иконка настроек - показываем только если автосканирование включено
+        if (isAutoScanEnabled) {
+            IconButton(
+                onClick = onOpenSettings,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, end = 16.dp)
+                    .statusBarsPadding()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Настройки",
+                    tint = BrandDarkGray
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun SubmittingPaymentScreenContent() {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("loader.json")
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = true,
+        speed = 1f
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -451,23 +590,20 @@ private fun SubmittingPaymentScreenContent() {
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(32.dp))
+        Box(
+            modifier = Modifier
+                .size(380.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
-        WaveCircle(
-            coreColor = BrandOrange,
-            waveColor = BrandGray,
-            showOrbitDots = true,
-            content = {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(44.dp),
-                    color = BrandOrange,
-                    strokeWidth = 3.dp
-                )
-            },
-            onClick = {}
-        )
-
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = "отправка платежа...",
@@ -488,6 +624,17 @@ private fun PaymentConfirmScreenContent(
 ) {
     val formattedAmount = formatAmount(candidate.amountMinor)
 
+    val lottieComposition by rememberLottieComposition(
+        LottieCompositionSpec.Asset("store_animated.json")
+    )
+
+    val lottieProgress by animateLottieCompositionAsState(
+        composition = lottieComposition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = true,
+        speed = 1f
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -498,42 +645,88 @@ private fun PaymentConfirmScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 28.dp, vertical = 18.dp)
-                .padding(bottom = 112.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(vertical = 12.dp)
+                modifier = Modifier.padding(vertical = 12.dp)
             ) {
                 IconButton(
                     modifier = Modifier.size(28.dp),
                     onClick = onCancel,
                 ) {
-                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null, tint = BrandBlack)
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Назад",
+                        tint = BrandBlack
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Text(
-                    text = "Оплатить",
-                    fontSize = 16.sp,
+                    text = "Подтверждение платежа",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = BrandBlack
                 )
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            ConfirmSection(label = "Магазин", value = candidate.merchantName.ifBlank { "—" })
-            Spacer(modifier = Modifier.height(28.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(bottom = 16.dp),
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 8.dp,
+                    pressedElevation = 12.dp
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(200.dp)
+                            .padding(bottom = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LottieAnimation(
+                            composition = lottieComposition,
+                            progress = { lottieProgress },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
-            ConfirmSection(label = "Сумма", value = formattedAmount)
-            Spacer(modifier = Modifier.height(28.dp))
+                    ConfirmSection(
+                        label = "Магазин",
+                        value = candidate.merchantName.ifBlank { "—" }
+                    )
 
-            ConfirmSection(label = "QR link", value = candidate.qrLink)
-            Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-            ConfirmSection(label = "QRC ID", value = candidate.qrcId)
+                    Divider(color = BrandLightGray, thickness = 1.dp)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ConfirmSection(
+                        label = "Сумма к оплате",
+                        value = formattedAmount,
+                        valueSize = 26.sp,
+                        isAmount = true
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
         }
 
         PrimaryButton(
@@ -542,6 +735,7 @@ private fun PaymentConfirmScreenContent(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 28.dp, vertical = 18.dp)
+                .fillMaxWidth()
                 .height(56.dp)
         )
     }
@@ -565,15 +759,35 @@ private fun SuccessScreenContent(
 
     val formattedAmount = formatAmount(candidate.amountMinor)
     var progressBarProgress by remember { mutableFloatStateOf(0f) }
-    val timeoutDuration = 10000L
+    val timeoutDuration = 5000L
+
+    var isExiting by remember { mutableStateOf(false) }
+
+    val exitAlpha by animateFloatAsState(
+        targetValue = if (isExiting) 0f else 1f,
+        animationSpec = tween(500),
+        label = "exit_alpha"
+    )
+
+    val exitScale by animateFloatAsState(
+        targetValue = if (isExiting) 0f else 1f,
+        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        label = "exit_scale"
+    )
+
+    LaunchedEffect(Unit) {
+        delay(4500)
+        isExiting = true
+        delay(500)
+        onDone()
+    }
 
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
-        while (true) {
+        while (!isExiting) {
             val elapsed = System.currentTimeMillis() - startTime
             if (elapsed >= timeoutDuration) {
                 progressBarProgress = 1f
-                onDone()
                 break
             }
             progressBarProgress = elapsed.toFloat() / timeoutDuration.toFloat()
@@ -584,6 +798,8 @@ private fun SuccessScreenContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .alpha(exitAlpha)
+            .scale(exitScale)
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
@@ -778,24 +994,27 @@ private fun PrimaryButton(
 @Composable
 private fun ConfirmSection(
     label: String,
-    value: String
+    value: String,
+    valueSize: androidx.compose.ui.unit.TextUnit = 24.sp,
+    isAmount: Boolean = false
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = label,
             fontSize = 14.sp,
             fontWeight = FontWeight.Normal,
-            color = BrandOrange
+            color = BrandOrange,
+            letterSpacing = 0.5.sp
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = value,
-            fontSize = 24.sp,
-            lineHeight = 30.sp,
-            fontWeight = FontWeight.Black,
-            color = BrandBlack,
+            fontSize = valueSize,
+            lineHeight = if (isAmount) 40.sp else 30.sp,
+            fontWeight = if (isAmount) FontWeight.Black else FontWeight.Bold,
+            color = if (isAmount) BrandBlack else BrandDarkGray,
             maxLines = 4,
             overflow = TextOverflow.Ellipsis
         )
