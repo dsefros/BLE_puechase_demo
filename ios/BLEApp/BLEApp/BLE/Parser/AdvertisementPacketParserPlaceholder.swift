@@ -1,7 +1,2 @@
-import Foundation
-
-struct AdvertisementPacketParserPlaceholder {
-    func parse(_ data: Data) -> BleDeviceCandidate? {
-        nil
-    }
-}
+@available(*, deprecated, message: "Use AdvertisementPacketParser")
+typealias AdvertisementPacketParserPlaceholder = AdvertisementPacketParser

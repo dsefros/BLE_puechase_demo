@@ -29,6 +29,14 @@
 		021 /* BleDiscoveredAdvertisement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 121 /* BleDiscoveredAdvertisement.swift */; };
 		022 /* BleScannerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 122 /* BleScannerState.swift */; };
 		023 /* BleScannerModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123 /* BleScannerModelTests.swift */; };
+		024 /* AdvertisementPacketParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124 /* AdvertisementPacketParser.swift */; };
+		025 /* ScanResponseParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125 /* ScanResponseParser.swift */; };
+		026 /* VolnaQrcIdConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126 /* VolnaQrcIdConverter.swift */; };
+		027 /* VolnaCandidateAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127 /* VolnaCandidateAssembler.swift */; };
+		028 /* AdvertisementPacketParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128 /* AdvertisementPacketParserTests.swift */; };
+		029 /* ScanResponseParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 129 /* ScanResponseParserTests.swift */; };
+		030 /* VolnaQrcIdConverterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130 /* VolnaQrcIdConverterTests.swift */; };
+		031 /* VolnaCandidateAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131 /* VolnaCandidateAssemblerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -65,6 +73,14 @@
 		121 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleDiscoveredAdvertisement.swift; sourceTree = "<group>"; };
 		122 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerState.swift; sourceTree = "<group>"; };
 		123 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerModelTests.swift; sourceTree = "<group>"; };
+		124 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParser.swift; sourceTree = "<group>"; };
+		125 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParser.swift; sourceTree = "<group>"; };
+		126 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaQrcIdConverter.swift; sourceTree = "<group>"; };
+		127 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaCandidateAssembler.swift; sourceTree = "<group>"; };
+		128 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParserTests.swift; sourceTree = "<group>"; };
+		129 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParserTests.swift; sourceTree = "<group>"; };
+		130 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaQrcIdConverterTests.swift; sourceTree = "<group>"; };
+		131 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaCandidateAssemblerTests.swift; sourceTree = "<group>"; };
 		701 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = BLEApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		702 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BLEAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -86,7 +102,7 @@
 			sourceTree = "<group>";
 			children = (610, 620, 630, 640, 650, 119);
 		};
-		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118,123); };
+		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118,123,128,129,130,131); };
 		610 = { isa = PBXGroup; path = App; sourceTree = "<group>"; children = (101, 102); };
 		620 = { isa = PBXGroup; path = UI; sourceTree = "<group>"; children = (621, 622); };
 		621 = { isa = PBXGroup; path = Home; sourceTree = "<group>"; children = (103, 104); };
@@ -97,7 +113,7 @@
 		640 = { isa = PBXGroup; path = BLE; sourceTree = "<group>"; children = (641, 642, 643); };
 		641 = { isa = PBXGroup; path = Config; sourceTree = "<group>"; children = (109); };
 		642 = { isa = PBXGroup; path = Scanner; sourceTree = "<group>"; children = (110, 111, 112, 120, 121, 122); };
-		643 = { isa = PBXGroup; path = Parser; sourceTree = "<group>"; children = (113, 114); };
+		643 = { isa = PBXGroup; path = Parser; sourceTree = "<group>"; children = (113, 114, 124, 125, 126, 127); };
 		650 = { isa = PBXGroup; path = Infrastructure; sourceTree = "<group>"; children = (651, 652); };
 		651 = { isa = PBXGroup; path = Prerequisites; sourceTree = "<group>"; children = (115, 116); };
 		652 = { isa = PBXGroup; path = Logging; sourceTree = "<group>"; children = (117); };
@@ -152,8 +168,8 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022); runOnlyForDeploymentPostprocessing = 0; };
-		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018,023); runOnlyForDeploymentPostprocessing = 0; };
+		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022,024,025,026,027); runOnlyForDeploymentPostprocessing = 0; };
+		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018,023,028,029,030,031); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */

@@ -1,7 +1,2 @@
-import Foundation
-
-struct ScanResponseParserPlaceholder {
-    func parse(_ data: Data) -> PaymentCandidate? {
-        nil
-    }
-}
+@available(*, deprecated, message: "Use ScanResponseParser")
+typealias ScanResponseParserPlaceholder = ScanResponseParser

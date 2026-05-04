@@ -5,4 +5,7 @@ struct PaymentCandidate: Equatable {
     let amountMinor: UInt32
     let merchant: String
     let device: BleDeviceCandidate
+    let rssi: Int
+    let finalRSSI: Int
+    let rssiDelta: Int
 }

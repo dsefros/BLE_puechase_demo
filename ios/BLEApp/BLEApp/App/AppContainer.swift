@@ -5,16 +5,18 @@ struct AppContainer {
     let prerequisitesChecker: PrerequisitesCheckingPlaceholder
     let scanner: BleScannerProtocol
     let validateSignalUseCase: ValidateSignalUseCase
-    let advertisementParser: AdvertisementPacketParserPlaceholder
-    let scanResponseParser: ScanResponseParserPlaceholder
+    let advertisementParser: AdvertisementPacketParser
+    let scanResponseParser: ScanResponseParser
+    let candidateAssembler: VolnaCandidateAssembler
 
     init(
         logger: AppLogger = AppLogger(),
         prerequisitesChecker: PrerequisitesCheckingPlaceholder = PrerequisitesCheckingPlaceholder(),
         scanner: BleScannerProtocol = CoreBluetoothBleScanner(),
         validateSignalUseCase: ValidateSignalUseCase = ValidateSignalUseCase(),
-        advertisementParser: AdvertisementPacketParserPlaceholder = AdvertisementPacketParserPlaceholder(),
-        scanResponseParser: ScanResponseParserPlaceholder = ScanResponseParserPlaceholder()
+        advertisementParser: AdvertisementPacketParser = AdvertisementPacketParser(),
+        scanResponseParser: ScanResponseParser = ScanResponseParser(),
+        candidateAssembler: VolnaCandidateAssembler = VolnaCandidateAssembler()
     ) {
         self.logger = logger
         self.prerequisitesChecker = prerequisitesChecker
@@ -22,5 +24,6 @@ struct AppContainer {
         self.validateSignalUseCase = validateSignalUseCase
         self.advertisementParser = advertisementParser
         self.scanResponseParser = scanResponseParser
+        self.candidateAssembler = candidateAssembler
     }
 }
