@@ -11,7 +11,7 @@ struct AppContainer {
     init(
         logger: AppLogger = AppLogger(),
         prerequisitesChecker: PrerequisitesCheckingPlaceholder = PrerequisitesCheckingPlaceholder(),
-        scanner: BleScannerProtocol = BleScannerPlaceholder(),
+        scanner: BleScannerProtocol = CoreBluetoothBleScanner(),
         validateSignalUseCase: ValidateSignalUseCase = ValidateSignalUseCase(),
         advertisementParser: AdvertisementPacketParserPlaceholder = AdvertisementPacketParserPlaceholder(),
         scanResponseParser: ScanResponseParserPlaceholder = ScanResponseParserPlaceholder()

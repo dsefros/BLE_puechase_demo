@@ -25,6 +25,10 @@
 		017 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* AppLogger.swift */; };
 		018 /* BleConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118 /* BleConfigTests.swift */; };
 		019 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 119 /* Assets.xcassets */; };
+		020 /* CoreBluetoothBleScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120 /* CoreBluetoothBleScanner.swift */; };
+		021 /* BleDiscoveredAdvertisement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 121 /* BleDiscoveredAdvertisement.swift */; };
+		022 /* BleScannerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 122 /* BleScannerState.swift */; };
+		023 /* BleScannerModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123 /* BleScannerModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +61,10 @@
 		117 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		118 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleConfigTests.swift; sourceTree = "<group>"; };
 		119 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		120 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBleScanner.swift; sourceTree = "<group>"; };
+		121 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleDiscoveredAdvertisement.swift; sourceTree = "<group>"; };
+		122 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerState.swift; sourceTree = "<group>"; };
+		123 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerModelTests.swift; sourceTree = "<group>"; };
 		701 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = BLEApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		702 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BLEAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -78,7 +86,7 @@
 			sourceTree = "<group>";
 			children = (610, 620, 630, 640, 650, 119);
 		};
-		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118); };
+		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118,123); };
 		610 = { isa = PBXGroup; path = App; sourceTree = "<group>"; children = (101, 102); };
 		620 = { isa = PBXGroup; path = UI; sourceTree = "<group>"; children = (621, 622); };
 		621 = { isa = PBXGroup; path = Home; sourceTree = "<group>"; children = (103, 104); };
@@ -88,7 +96,7 @@
 		632 = { isa = PBXGroup; path = UseCases; sourceTree = "<group>"; children = (108); };
 		640 = { isa = PBXGroup; path = BLE; sourceTree = "<group>"; children = (641, 642, 643); };
 		641 = { isa = PBXGroup; path = Config; sourceTree = "<group>"; children = (109); };
-		642 = { isa = PBXGroup; path = Scanner; sourceTree = "<group>"; children = (110, 111, 112); };
+		642 = { isa = PBXGroup; path = Scanner; sourceTree = "<group>"; children = (110, 111, 112, 120, 121, 122); };
 		643 = { isa = PBXGroup; path = Parser; sourceTree = "<group>"; children = (113, 114); };
 		650 = { isa = PBXGroup; path = Infrastructure; sourceTree = "<group>"; children = (651, 652); };
 		651 = { isa = PBXGroup; path = Prerequisites; sourceTree = "<group>"; children = (115, 116); };
@@ -144,8 +152,8 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017); runOnlyForDeploymentPostprocessing = 0; };
-		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018); runOnlyForDeploymentPostprocessing = 0; };
+		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022); runOnlyForDeploymentPostprocessing = 0; };
+		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018,023); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -163,6 +171,7 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to discover nearby BLE payment tags while the app is open.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -180,7 +189,8 @@
 					TARGETED_DEVICE_FAMILY = "1,2";
 				};
 			};
-			911 = {isa = XCBuildConfiguration; name = Release; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEApp; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; };
+			911 = {isa = XCBuildConfiguration; name = Release; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to discover nearby BLE payment tags while the app is open.";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEApp; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; };
 		912 = {
 			isa = XCBuildConfiguration;
 			name = Debug;

@@ -1,6 +1,7 @@
 import Foundation
 
 enum BleScanResult: Equatable {
-    case notImplemented
-    case candidates([BleDeviceCandidate])
+    case started
+    case stopped
+    case unavailable(BleScannerState)
 }
