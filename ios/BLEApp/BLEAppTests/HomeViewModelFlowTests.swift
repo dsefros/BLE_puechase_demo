@@ -48,7 +48,7 @@ final class HomeViewModelFlowTests: XCTestCase {
         let sut = HomeViewModel(container: AppContainer(scanner: scanner))
 
         sut.startScan()
-        await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -69))
+        await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -71))
 
         XCTAssertEqual(sut.flowState, .scanning)
         XCTAssertNil(sut.latestValidCandidate)
