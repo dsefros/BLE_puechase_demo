@@ -1,0 +1,211 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		001 /* BLEApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101 /* BLEApp.swift */; };
+		002 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102 /* AppContainer.swift */; };
+		003 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103 /* HomeView.swift */; };
+		004 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 104 /* HomeViewModel.swift */; };
+		005 /* PaymentFlowState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105 /* PaymentFlowState.swift */; };
+		006 /* BleDeviceCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106 /* BleDeviceCandidate.swift */; };
+		007 /* PaymentCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107 /* PaymentCandidate.swift */; };
+		008 /* ValidateSignalUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108 /* ValidateSignalUseCase.swift */; };
+		009 /* BleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109 /* BleConfig.swift */; };
+		010 /* BleScanResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110 /* BleScanResult.swift */; };
+		011 /* BleScannerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111 /* BleScannerProtocol.swift */; };
+		012 /* BleScannerPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112 /* BleScannerPlaceholder.swift */; };
+		013 /* AdvertisementPacketParserPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113 /* AdvertisementPacketParserPlaceholder.swift */; };
+		014 /* ScanResponseParserPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114 /* ScanResponseParserPlaceholder.swift */; };
+		015 /* PrerequisitesState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115 /* PrerequisitesState.swift */; };
+		016 /* PrerequisitesCheckingPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116 /* PrerequisitesCheckingPlaceholder.swift */; };
+		017 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* AppLogger.swift */; };
+		018 /* BleConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118 /* BleConfigTests.swift */; };
+		019 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 119 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		201 = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 900;
+			proxyType = 1;
+			remoteGlobalIDString = 801;
+			remoteInfo = BLEApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		101 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEApp.swift; sourceTree = "<group>"; };
+		102 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		103 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		104 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		105 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentFlowState.swift; sourceTree = "<group>"; };
+		106 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleDeviceCandidate.swift; sourceTree = "<group>"; };
+		107 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentCandidate.swift; sourceTree = "<group>"; };
+		108 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidateSignalUseCase.swift; sourceTree = "<group>"; };
+		109 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleConfig.swift; sourceTree = "<group>"; };
+		110 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScanResult.swift; sourceTree = "<group>"; };
+		111 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerProtocol.swift; sourceTree = "<group>"; };
+		112 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerPlaceholder.swift; sourceTree = "<group>"; };
+		113 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParserPlaceholder.swift; sourceTree = "<group>"; };
+		114 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParserPlaceholder.swift; sourceTree = "<group>"; };
+		115 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrerequisitesState.swift; sourceTree = "<group>"; };
+		116 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrerequisitesCheckingPlaceholder.swift; sourceTree = "<group>"; };
+		117 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		118 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleConfigTests.swift; sourceTree = "<group>"; };
+		119 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		701 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = BLEApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		702 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BLEAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		501 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		502 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		601 = {
+			isa = PBXGroup;
+			children = (602, 603, 700);
+			sourceTree = "<group>";
+		};
+		602 = {
+			isa = PBXGroup;
+			path = BLEApp;
+			sourceTree = "<group>";
+			children = (610, 620, 630, 640, 650, 119);
+		};
+		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118); };
+		610 = { isa = PBXGroup; path = App; sourceTree = "<group>"; children = (101, 102); };
+		620 = { isa = PBXGroup; path = UI; sourceTree = "<group>"; children = (621, 622); };
+		621 = { isa = PBXGroup; path = Home; sourceTree = "<group>"; children = (103, 104); };
+		622 = { isa = PBXGroup; path = Payment; sourceTree = "<group>"; children = (105); };
+		630 = { isa = PBXGroup; path = Domain; sourceTree = "<group>"; children = (631, 632); };
+		631 = { isa = PBXGroup; path = Models; sourceTree = "<group>"; children = (106, 107); };
+		632 = { isa = PBXGroup; path = UseCases; sourceTree = "<group>"; children = (108); };
+		640 = { isa = PBXGroup; path = BLE; sourceTree = "<group>"; children = (641, 642, 643); };
+		641 = { isa = PBXGroup; path = Config; sourceTree = "<group>"; children = (109); };
+		642 = { isa = PBXGroup; path = Scanner; sourceTree = "<group>"; children = (110, 111, 112); };
+		643 = { isa = PBXGroup; path = Parser; sourceTree = "<group>"; children = (113, 114); };
+		650 = { isa = PBXGroup; path = Infrastructure; sourceTree = "<group>"; children = (651, 652); };
+		651 = { isa = PBXGroup; path = Prerequisites; sourceTree = "<group>"; children = (115, 116); };
+		652 = { isa = PBXGroup; path = Logging; sourceTree = "<group>"; children = (117); };
+		700 = { isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (701, 702); };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		801 = {
+			isa = PBXNativeTarget;
+			name = BLEApp;
+			productName = BLEApp;
+			productReference = 701;
+			productType = "com.apple.product-type.application";
+			buildConfigurationList = 851;
+			buildPhases = (501, 503, 504);
+			buildRules = ();
+			dependencies = ();
+		};
+		802 = {
+			isa = PBXNativeTarget;
+			name = BLEAppTests;
+			productName = BLEAppTests;
+			productReference = 702;
+			productType = "com.apple.product-type.bundle.unit-test";
+			buildConfigurationList = 852;
+			buildPhases = (502, 505, 506);
+			buildRules = ();
+			dependencies = (803);
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		900 = {
+			isa = PBXProject;
+			attributes = { LastUpgradeCheck = 1600; TargetAttributes = { 802 = { TestTargetID = 801; }; }; };
+			buildConfigurationList = 850;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = 601;
+			productRefGroup = 700;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (801, 802);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		504 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (019); runOnlyForDeploymentPostprocessing = 0; };
+		506 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017); runOnlyForDeploymentPostprocessing = 0; };
+		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		803 = {isa = PBXTargetDependency; target = 801; targetProxy = 201; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		910 = {
+			isa = XCBuildConfiguration;
+			name = Debug;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+		};
+		911 = {isa = XCBuildConfiguration; name = Release; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEApp; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; };
+		912 = {
+			isa = XCBuildConfiguration;
+			name = Debug;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEApp.app/BLEApp";
+			};
+		};
+		913 = {isa = XCBuildConfiguration; name = Release; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.BLEAppTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEApp.app/BLEApp"; }; };
+		914 = {isa = XCBuildConfiguration; name = Debug; buildSettings = { CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SWIFT_VERSION = 5.0; }; };
+		915 = {isa = XCBuildConfiguration; name = Release; buildSettings = { CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SWIFT_VERSION = 5.0; }; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		850 = {isa = XCConfigurationList; buildConfigurations = (914,915); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		851 = {isa = XCConfigurationList; buildConfigurations = (910,911); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		852 = {isa = XCConfigurationList; buildConfigurations = (912,913); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 900;
+}
