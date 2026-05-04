@@ -9,33 +9,25 @@
 ## Current MVP scope
 
 - Foreground-only, scan-only parity target with Android.
+- PR 2 adds Volna BLE parser/filter parity (service-data parsing, manufacturer parsing, QRC conversion, RSSI filtering, candidate assembly) with hardware-independent unit tests.
 - Shared BLE constants and behavior contract source of truth: `docs/ble-protocol-contract.md`.
 
 ## What this PR intentionally does NOT implement
 
-- Real BLE scanning (CoreBluetooth runtime scan) is not implemented yet.
-- Background BLE modes are out of current MVP scope.
-- GATT read/write/notify is out of current MVP scope.
+- GATT read/write/notify.
+- Background BLE modes.
+- Backend/payment submission and final payment confirmation flow.
 
 ## Device testing note
 
-Real BLE validation in later PRs should use a physical iPhone because simulator BLE behavior is limited.
-
-## Architecture mapping
-
-- Android `presentation/` → iOS `UI/` + app state placeholders.
-- Android `domain/` → iOS `Domain/` placeholders.
-- Android `data/ble/` → iOS `BLE/` placeholders.
-- Android `platform/` → iOS `Infrastructure/Prerequisites/` placeholders.
-- Android `app/di/` → iOS `App/` composition placeholders.
-
+Real BLE end-to-end validation still requires a physical iPhone and real BLE tag/terminal. Parser/filter logic is unit-tested and does not require BLE hardware.
 
 ## Local validation
 
 Run from repository root:
 
 - `xcodebuild -list -project ios/BLEApp/BLEApp.xcodeproj`
-- `xcodebuild -project ios/BLEApp/BLEApp.xcodeproj -scheme BLEApp -destination 'platform=iOS Simulator,name=iPhone 16' build`
-- `xcodebuild -project ios/BLEApp/BLEApp.xcodeproj -scheme BLEApp -destination 'platform=iOS Simulator,name=iPhone 16' test`
+- `xcodebuild -project ios/BLEApp/BLEApp.xcodeproj -scheme BLEApp -destination 'platform=iOS Simulator,name=iPhone 17' build`
+- `xcodebuild -project ios/BLEApp/BLEApp.xcodeproj -scheme BLEApp -destination 'platform=iOS Simulator,name=iPhone 17' test`
 
-Simulator device name may need adjustment to match your installed Xcode simulator runtimes.
+Simulator device name may need adjustment to match installed Xcode simulator runtimes.

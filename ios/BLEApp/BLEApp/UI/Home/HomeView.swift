@@ -15,6 +15,15 @@ struct HomeView: View {
             Text("Scanning active: \(viewModel.isScanning ? "Yes" : "No")")
                 .font(.footnote)
 
+
+            if let candidate = viewModel.latestValidCandidate {
+                Text("Latest candidate: \(candidate.merchant), \(candidate.amountMinor), QRC: \(candidate.qrcID)")
+                    .font(.footnote)
+            } else if let rejection = viewModel.latestParseRejection {
+                Text("Last parse rejection: \(rejection)")
+                    .font(.footnote)
+            }
+
             HStack {
                 Button("Start scan") {
                     viewModel.startScan()
