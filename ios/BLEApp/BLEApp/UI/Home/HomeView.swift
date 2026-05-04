@@ -10,16 +10,38 @@ struct HomeView: View {
                 .bold()
 
             Text("MVP Scope: foreground-only, scan-only parity with Android.")
-            Text("BLE scanning is not implemented in this PR. This is a project skeleton.")
-                .foregroundStyle(.secondary)
 
-            Button("Start scan (placeholder)") {
-                viewModel.startScanPlaceholder()
-            }
-            .buttonStyle(.borderedProminent)
-
-            Text("State: \(viewModel.flowState.rawValue)")
+            Text("Scanner state: \(viewModel.scannerState.rawValue)")
+            Text("Scanning active: \(viewModel.isScanning ? "Yes" : "No")")
                 .font(.footnote)
+
+            HStack {
+                Button("Start scan") {
+                    viewModel.startScan()
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Stop scan") {
+                    viewModel.stopScan()
+                }
+                .buttonStyle(.bordered)
+            }
+
+            List(viewModel.discoveredAdvertisements) { advertisement in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(advertisement.peripheralName ?? "(no peripheral name)")
+                        .font(.headline)
+                    Text("ID: \(advertisement.peripheralID.uuidString)")
+                        .font(.caption)
+                    Text("RSSI: \(advertisement.rssi)")
+                        .font(.subheadline)
+                    Text("Volna service data: \(advertisement.hasVolnaServiceData ? "present" : "missing")")
+                        .font(.caption)
+                    Text("Manufacturer data: \(advertisement.hasManufacturerData ? "present" : "missing")")
+                        .font(.caption)
+                }
+                .padding(.vertical, 4)
+            }
         }
         .padding()
     }
