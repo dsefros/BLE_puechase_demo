@@ -39,14 +39,51 @@ final class HomeViewModel: ObservableObject {
     func startScan() {
         let result = container.scanner.startScan()
         isScanning = container.scanner.isScanning
-        flowState = .scanningNotImplemented
+
+        switch result {
+        case .started:
+            flowState = .scanning
+        case .stopped:
+            flowState = .idle
+        case .unavailable(let state):
+            if state == .unauthorized {
+                flowState = .blockingError(message: "Bluetooth permission is not granted")
+            } else {
+                flowState = .scannerUnavailable(message: "Scanner unavailable: \(state.rawValue)")
+            }
+        }
+
         container.logger.log("Start scan result: \(result)")
     }
 
     func stopScan() {
         let result = container.scanner.stopScan()
         isScanning = container.scanner.isScanning
+        if !isScanning, case .scanning = flowState {
+            flowState = .idle
+        }
         container.logger.log("Stop scan result: \(result)")
+    }
+
+    func confirmPayment() {
+        guard case let .readyForConfirmation(candidate) = flowState else { return }
+        flowState = .submittingPayment(candidate)
+        let submission = submitPaymentPlaceholder(candidate)
+        switch submission {
+        case .success:
+            flowState = .paymentSuccess(candidate)
+        case .failure(let message):
+            flowState = .paymentError(candidate, message: message)
+        }
+    }
+
+    func cancelConfirmation() {
+        latestValidCandidate = nil
+        if isScanning {
+            flowState = .scanning
+        } else {
+            flowState = .idle
+        }
     }
 
     private func processAdvertisement(_ event: BleDiscoveredAdvertisement) {
@@ -66,8 +103,23 @@ final class HomeViewModel: ObservableObject {
             }
             latestParseRejection = nil
             latestValidCandidate = candidate
+            _ = container.scanner.stopScan()
+            isScanning = container.scanner.isScanning
+            flowState = .readyForConfirmation(candidate)
         } catch {
             latestParseRejection = String(describing: error)
         }
+    }
+
+    private enum PlaceholderSubmitResult {
+        case success
+        case failure(message: String)
+    }
+
+    private func submitPaymentPlaceholder(_ candidate: PaymentCandidate) -> PlaceholderSubmitResult {
+        if candidate.qrcID.isEmpty {
+            return .failure(message: "Placeholder submit rejected empty QRC ID")
+        }
+        return .success
     }
 }
