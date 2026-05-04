@@ -9,18 +9,27 @@
 ## Current MVP scope
 
 - Foreground-only, scan-only parity target with Android.
-- PR 2 adds Volna BLE parser/filter parity (service-data parsing, manufacturer parsing, QRC conversion, RSSI filtering, candidate assembly) with hardware-independent unit tests.
+- PR 2 added Volna BLE parser/filter parity (service-data parsing, manufacturer parsing, QRC conversion, RSSI filtering, candidate assembly) with hardware-independent unit tests.
+- PR 3 adds the first iOS confirmation flow: scan -> parsed `PaymentCandidate` -> ready to confirm -> deterministic placeholder submit -> success/error.
 - Shared BLE constants and behavior contract source of truth: `docs/ble-protocol-contract.md`.
 
-## What this PR intentionally does NOT implement
+## Supported payment flow (PR 3)
 
-- GATT read/write/notify.
-- Background BLE modes.
-- Backend/payment submission and final payment confirmation flow.
+- Home state transitions: `idle`, `scanning`, `readyForConfirmation(candidate)`, `submittingPayment(candidate)`, `paymentSuccess(candidate)`, `paymentError(candidate,message)`, `scannerUnavailable`, and `blockingError`.
+- When a valid candidate is parsed, scanning is stopped and the confirmation UI is shown.
+- Confirmation UI includes merchant, formatted amount, QRC ID, and RSSI diagnostics (`rssi`, `finalRSSI`, `rssiDelta`).
+- "Confirm payment" uses an in-app deterministic placeholder submit path only (no real backend).
+
+## Non-goals (still intentionally not implemented)
+
+- No real backend/payment submission.
+- No GATT read/write/notify.
+- No background BLE modes.
+- No Android app changes in this iOS PR.
 
 ## Device testing note
 
-Real BLE end-to-end validation still requires a physical iPhone and real BLE tag/terminal. Parser/filter logic is unit-tested and does not require BLE hardware.
+Real BLE end-to-end validation still requires a physical iPhone and real BLE tag/terminal. Parser/filter and payment-flow transitions are unit-tested and do not require BLE hardware.
 
 ## Local validation
 

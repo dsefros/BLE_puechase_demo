@@ -1,8 +1,12 @@
 import Foundation
 
-enum PaymentFlowState: String {
+enum PaymentFlowState: Equatable {
     case idle
-    case scanningNotImplemented
-    case readyForConfirmationPlaceholder
-    case blockingErrorPlaceholder
+    case scanning
+    case readyForConfirmation(PaymentCandidate)
+    case submittingPayment(PaymentCandidate)
+    case paymentSuccess(PaymentCandidate)
+    case paymentError(PaymentCandidate, message: String)
+    case scannerUnavailable(message: String)
+    case blockingError(message: String)
 }
