@@ -38,6 +38,10 @@
 		030 /* VolnaQrcIdConverterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130 /* VolnaQrcIdConverterTests.swift */; };
 		031 /* VolnaCandidateAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131 /* VolnaCandidateAssemblerTests.swift */; };
 		032 /* HomeViewModelFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132 /* HomeViewModelFlowTests.swift */; };
+		033 /* BleScannerStatusPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133 /* BleScannerStatusPresenter.swift */; };
+		034 /* PaymentSubmissionServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134 /* PaymentSubmissionServiceProtocol.swift */; };
+		035 /* PlaceholderPaymentSubmissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 135 /* PlaceholderPaymentSubmissionService.swift */; };
+		036 /* BleScannerStatusPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136 /* BleScannerStatusPresenterTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +87,10 @@
 		130 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaQrcIdConverterTests.swift; sourceTree = "<group>"; };
 		131 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaCandidateAssemblerTests.swift; sourceTree = "<group>"; };
 		132 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelFlowTests.swift; sourceTree = "<group>"; };
+		133 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerStatusPresenter.swift; sourceTree = "<group>"; };
+		134 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentSubmissionServiceProtocol.swift; sourceTree = "<group>"; };
+		135 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderPaymentSubmissionService.swift; sourceTree = "<group>"; };
+		136 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerStatusPresenterTests.swift; sourceTree = "<group>"; };
 		701 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = BLEApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		702 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BLEAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -104,17 +112,18 @@
 			sourceTree = "<group>";
 			children = (610, 620, 630, 640, 650, 119);
 		};
-		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118,123,128,129,130,131,132); };
+		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118,123,128,129,130,131,132,136); };
 		610 = { isa = PBXGroup; path = App; sourceTree = "<group>"; children = (101, 102); };
 		620 = { isa = PBXGroup; path = UI; sourceTree = "<group>"; children = (621, 622); };
 		621 = { isa = PBXGroup; path = Home; sourceTree = "<group>"; children = (103, 104); };
 		622 = { isa = PBXGroup; path = Payment; sourceTree = "<group>"; children = (105); };
-		630 = { isa = PBXGroup; path = Domain; sourceTree = "<group>"; children = (631, 632); };
+		630 = { isa = PBXGroup; path = Domain; sourceTree = "<group>"; children = (631, 632, 633); };
 		631 = { isa = PBXGroup; path = Models; sourceTree = "<group>"; children = (106, 107); };
 		632 = { isa = PBXGroup; path = UseCases; sourceTree = "<group>"; children = (108); };
+		633 = { isa = PBXGroup; path = Payments; sourceTree = "<group>"; children = (134, 135); };
 		640 = { isa = PBXGroup; path = BLE; sourceTree = "<group>"; children = (641, 642, 643); };
 		641 = { isa = PBXGroup; path = Config; sourceTree = "<group>"; children = (109); };
-		642 = { isa = PBXGroup; path = Scanner; sourceTree = "<group>"; children = (110, 111, 112, 120, 121, 122); };
+		642 = { isa = PBXGroup; path = Scanner; sourceTree = "<group>"; children = (110, 111, 112, 120, 121, 122, 133); };
 		643 = { isa = PBXGroup; path = Parser; sourceTree = "<group>"; children = (113, 114, 124, 125, 126, 127); };
 		650 = { isa = PBXGroup; path = Infrastructure; sourceTree = "<group>"; children = (651, 652); };
 		651 = { isa = PBXGroup; path = Prerequisites; sourceTree = "<group>"; children = (115, 116); };
@@ -170,8 +179,8 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022,024,025,026,027); runOnlyForDeploymentPostprocessing = 0; };
-		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018,023,028,029,030,031,032); runOnlyForDeploymentPostprocessing = 0; };
+		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022,024,025,026,027,033,034,035); runOnlyForDeploymentPostprocessing = 0; };
+		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018,023,028,029,030,031,032,036); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */

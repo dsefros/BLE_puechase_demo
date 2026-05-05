@@ -9,6 +9,29 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var latestValidCandidate: PaymentCandidate?
     @Published private(set) var latestParseRejection: String?
 
+    private let scannerStatusPresenter = BleScannerStatusPresenter()
+
+    var scannerStatus: BleScannerStatus {
+        scannerStatusPresenter.status(for: scannerState, isScanning: isScanning)
+    }
+
+
+    var canShowScanButtons: Bool {
+        if case .idle = flowState { return true }
+        if case .scanning = flowState { return true }
+        return false
+    }
+
+    var canStartScanAction: Bool {
+        guard case .idle = flowState else { return false }
+        return scannerStatus.canStartScan
+    }
+
+    var canStopScanAction: Bool {
+        guard case .scanning = flowState else { return false }
+        return isScanning
+    }
+
     private let container: AppContainer
     private let maxEvents = 20
 
@@ -47,9 +70,9 @@ final class HomeViewModel: ObservableObject {
             flowState = .idle
         case .unavailable(let state):
             if state == .unauthorized {
-                flowState = .blockingError(message: "Bluetooth permission is not granted")
+                flowState = .blockingError(message: "Bluetooth permission is required to scan for payment terminals.")
             } else {
-                flowState = .scannerUnavailable(message: "Scanner unavailable: \(state.rawValue)")
+                flowState = .scannerUnavailable(message: scannerStatusPresenter.status(for: state, isScanning: false).title)
             }
         }
 
@@ -65,10 +88,10 @@ final class HomeViewModel: ObservableObject {
         container.logger.log("Stop scan result: \(result)")
     }
 
-    func confirmPayment() {
+    func confirmPayment() async {
         guard case let .readyForConfirmation(candidate) = flowState else { return }
         flowState = .submittingPayment(candidate)
-        let submission = submitPaymentPlaceholder(candidate)
+        let submission = await container.paymentSubmissionService.submit(candidate: candidate)
         switch submission {
         case .success:
             flowState = .paymentSuccess(candidate)
@@ -109,17 +132,5 @@ final class HomeViewModel: ObservableObject {
         } catch {
             latestParseRejection = String(describing: error)
         }
-    }
-
-    private enum PlaceholderSubmitResult {
-        case success
-        case failure(message: String)
-    }
-
-    private func submitPaymentPlaceholder(_ candidate: PaymentCandidate) -> PlaceholderSubmitResult {
-        if candidate.qrcID.isEmpty {
-            return .failure(message: "Placeholder submit rejected empty QRC ID")
-        }
-        return .success
     }
 }
