@@ -40,3 +40,23 @@ Run from repository root:
 - `xcodebuild -project ios/BLEApp/BLEApp.xcodeproj -scheme BLEApp -destination 'platform=iOS Simulator,name=iPhone 17' test`
 
 Simulator device name may need adjustment to match installed Xcode simulator runtimes.
+
+## iOS migration step: payment UX + scanner UX + submission boundary
+
+This update focuses only on iOS and includes:
+- product-grade Home payment UI restructuring (payment flow first, diagnostics second),
+- user-facing Bluetooth/scanner status messaging,
+- payment submission boundary extraction behind `PaymentSubmissionServiceProtocol`.
+
+Current payment submission remains placeholder-only (`PlaceholderPaymentSubmissionService`); no real backend/payment API is implemented.
+
+### Non-goals preserved
+- No Android changes.
+- No GATT operations (`connect`, `discoverServices`, `readValue`, `writeValue`, `setNotifyValue`).
+- No background BLE modes (`UIBackgroundModes` / `bluetooth-central`).
+- No backend network integration.
+
+### Validation scope
+- Hardware-independent unit tests cover scanner status mapping and payment submission success/failure transitions.
+- Real BLE runtime validation still requires a physical iPhone and real BLE tag/terminal.
+- Simulator is useful for UI behavior and unit tests, but not full BLE runtime behavior.

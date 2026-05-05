@@ -5,7 +5,7 @@ import XCTest
 final class HomeViewModelFlowTests: XCTestCase {
     func testValidCandidateTransitionsToReadyForConfirmation() async {
         let scanner = FakeBleScanner()
-        let sut = HomeViewModel(container: AppContainer(scanner: scanner))
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .success)))
 
         sut.startScan()
         await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -55))
@@ -19,11 +19,11 @@ final class HomeViewModelFlowTests: XCTestCase {
 
     func testConfirmTransitionsToSubmittingThenSuccess() async {
         let scanner = FakeBleScanner()
-        let sut = HomeViewModel(container: AppContainer(scanner: scanner))
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .success)))
 
         sut.startScan()
         await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -55))
-        sut.confirmPayment()
+        await sut.confirmPayment()
 
         guard case .paymentSuccess(let candidate) = sut.flowState else {
             return XCTFail("Expected paymentSuccess")
@@ -31,6 +31,86 @@ final class HomeViewModelFlowTests: XCTestCase {
         XCTAssertEqual(candidate.amountMinor, 12345)
     }
 
+
+    func testConfirmFailureTransitionsToPaymentError() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .failure(message: "Failed"))))
+
+        sut.startScan()
+        await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -55))
+        await sut.confirmPayment()
+
+        guard case .paymentError(_, let message) = sut.flowState else {
+            return XCTFail("Expected paymentError")
+        }
+        XCTAssertEqual(message, "Failed")
+    }
+
+    func testConfirmInWrongStateDoesNotChangeFlowState() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .success)))
+        XCTAssertEqual(sut.flowState, .idle)
+
+        await sut.confirmPayment()
+
+        XCTAssertEqual(sut.flowState, .idle)
+    }
+
+    func testReadyForConfirmationDoesNotAllowGenericStartScan() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .success)))
+
+        sut.startScan()
+        await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -55))
+
+        XCTAssertFalse(sut.canShowScanButtons)
+        XCTAssertFalse(sut.canStartScanAction)
+        XCTAssertFalse(sut.canStopScanAction)
+    }
+
+    func testSubmittingPaymentDoesNotAllowGenericScanActions() async {
+        let scanner = FakeBleScanner()
+        let service = DelayedFakePaymentSubmissionService()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: service))
+
+        sut.startScan()
+        await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -55))
+
+        let task = Task { await sut.confirmPayment() }
+        await Task.yield()
+
+        guard case .submittingPayment = sut.flowState else {
+            return XCTFail("Expected submittingPayment")
+        }
+        XCTAssertFalse(sut.canShowScanButtons)
+        XCTAssertFalse(sut.canStartScanAction)
+        XCTAssertFalse(sut.canStopScanAction)
+
+        service.continueSubmission()
+        _ = await task.value
+    }
+
+    func testIdleReadyAllowsStartScan() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .success)))
+
+        XCTAssertEqual(sut.flowState, .idle)
+        XCTAssertTrue(sut.canShowScanButtons)
+        XCTAssertTrue(sut.canStartScanAction)
+        XCTAssertFalse(sut.canStopScanAction)
+    }
+
+    func testScanningAllowsStopScan() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .success)))
+
+        sut.startScan()
+
+        XCTAssertEqual(sut.flowState, .scanning)
+        XCTAssertTrue(sut.canShowScanButtons)
+        XCTAssertFalse(sut.canStartScanAction)
+        XCTAssertTrue(sut.canStopScanAction)
+    }
     func testCancelReturnsToIdleWhenNotScanning() async {
         let scanner = FakeBleScanner()
         let sut = HomeViewModel(container: AppContainer(scanner: scanner))
@@ -101,5 +181,29 @@ private final class FakeBleScanner: BleScannerProtocol {
 
     func emit(advertisement: BleDiscoveredAdvertisement) {
         advertisementDidDiscover?(advertisement)
+    }
+}
+
+
+private struct FakePaymentSubmissionService: PaymentSubmissionServiceProtocol {
+    let result: PaymentSubmissionResult
+
+    func submit(candidate: PaymentCandidate) async -> PaymentSubmissionResult {
+        result
+    }
+}
+
+private final class DelayedFakePaymentSubmissionService: PaymentSubmissionServiceProtocol {
+    private var continuation: CheckedContinuation<PaymentSubmissionResult, Never>?
+
+    func submit(candidate: PaymentCandidate) async -> PaymentSubmissionResult {
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func continueSubmission() {
+        continuation?.resume(returning: .success)
+        continuation = nil
     }
 }
