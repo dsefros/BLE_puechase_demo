@@ -344,6 +344,7 @@ struct HomeScreenPresentation {
     let canStopScanAction: Bool
     let isLiveMode: Bool
 
+    @MainActor
     static func live(from viewModel: HomeViewModel) -> Self {
         Self(scannerStatus: viewModel.scannerStatus,
              flowState: viewModel.flowState,
