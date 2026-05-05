@@ -207,3 +207,40 @@ private final class DelayedFakePaymentSubmissionService: PaymentSubmissionServic
         continuation = nil
     }
 }
+
+#if DEBUG
+@MainActor
+extension HomeViewModelFlowTests {
+    func testDemoPresentationScenariosArePreviewOnlyExceptLive() {
+        for scenario in HomeDemoScenario.allCases where scenario != .live {
+            let presentation = HomeScreenPresentation.demo(scenario)
+            XCTAssertFalse(presentation.isLiveMode)
+        }
+    }
+
+    func testDemoPresentationLiveMapsToInteractiveDefaults() {
+        let presentation = HomeScreenPresentation.demo(.live)
+        XCTAssertTrue(presentation.isLiveMode)
+        XCTAssertTrue(presentation.canShowScanButtons)
+        XCTAssertTrue(presentation.canStartScanAction)
+        XCTAssertFalse(presentation.canStopScanAction)
+        XCTAssertEqual(presentation.scannerState, .ready)
+    }
+
+    func testLivePresentationMapsFromViewModel() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: FakePaymentSubmissionService(result: .success)))
+
+        let idle = HomeScreenPresentation.live(from: sut)
+        XCTAssertTrue(idle.isLiveMode)
+        XCTAssertTrue(idle.canStartScanAction)
+
+        sut.startScan()
+        let scanning = HomeScreenPresentation.live(from: sut)
+        XCTAssertTrue(scanning.canShowScanButtons)
+        XCTAssertFalse(scanning.canStartScanAction)
+        XCTAssertTrue(scanning.canStopScanAction)
+        XCTAssertEqual(scanning.flowState, .scanning)
+    }
+}
+#endif
