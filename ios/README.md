@@ -11,7 +11,7 @@
 - Foreground-only, scan-only parity target with Android.
 - PR 2 added Volna BLE parser/filter parity (service-data parsing, manufacturer parsing, QRC conversion, RSSI filtering, candidate assembly) with hardware-independent unit tests.
 - PR 3 adds the first iOS confirmation flow: scan -> parsed `PaymentCandidate` -> ready to confirm -> deterministic placeholder submit -> success/error.
-- This PR adds iOS-only Home screen visual parity and DEBUG-only simulator demo states for payment-flow UI validation.
+- This PR adds iOS-only Android-like light full-screen Home states and DEBUG-only simulator demo scenarios for visual validation.
 - Shared BLE constants and behavior contract source of truth: `docs/ble-protocol-contract.md`.
 
 ## Supported payment flow (PR 3 + visual parity pass)
@@ -21,7 +21,7 @@
 - Confirmation UI includes merchant, formatted amount, QRC ID, and RSSI diagnostics (`rssi`, `finalRSSI`, `rssiDelta`).
 - "Confirm payment" uses an in-app deterministic placeholder submit path only (no real backend).
 
-## Simulator validation via DEBUG demo scenarios
+## Simulator validation via DEBUG Android-like light full-screen demo scenarios
 
 On iOS Simulator, CoreBluetooth is typically unsupported, so only unsupported scanner state appears in live mode.
 
@@ -31,7 +31,7 @@ To validate UI states in Simulator:
 2. Open Home screen.
 3. Use the **Demo scenario (DEBUG)** segmented control.
 4. Keep `Live` selected for real runtime behavior.
-5. Switch to preview scenarios to validate UI states without BLE hardware:
+5. Switch to preview scenarios to validate Android-like light full-screen UI states without BLE hardware:
    - `Unsupported`
    - `Ready`
    - `Scanning`
