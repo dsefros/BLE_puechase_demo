@@ -42,6 +42,14 @@
 		034 /* PaymentSubmissionServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134 /* PaymentSubmissionServiceProtocol.swift */; };
 		035 /* PlaceholderPaymentSubmissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 135 /* PlaceholderPaymentSubmissionService.swift */; };
 		036 /* BleScannerStatusPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136 /* BleScannerStatusPresenterTests.swift */; };
+		037 /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137 /* LottieView.swift */; };
+		038 /* background.json in Resources */ = {isa = PBXBuildFile; fileRef = 138 /* background.json */; };
+		039 /* bluetooth.json in Resources */ = {isa = PBXBuildFile; fileRef = 139 /* bluetooth.json */; };
+		040 /* loader.json in Resources */ = {isa = PBXBuildFile; fileRef = 140 /* loader.json */; };
+		041 /* store_animated.json in Resources */ = {isa = PBXBuildFile; fileRef = 141 /* store_animated.json */; };
+		042 /* success.json in Resources */ = {isa = PBXBuildFile; fileRef = 142 /* success.json */; };
+		043 /* failed.json in Resources */ = {isa = PBXBuildFile; fileRef = 143 /* failed.json */; };
+		044 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 905 /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,12 +99,19 @@
 		134 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentSubmissionServiceProtocol.swift; sourceTree = "<group>"; };
 		135 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderPaymentSubmissionService.swift; sourceTree = "<group>"; };
 		136 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerStatusPresenterTests.swift; sourceTree = "<group>"; };
+		137 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
+		138 = {isa = PBXFileReference; lastKnownFileType = text.json; path = background.json; sourceTree = "<group>"; };
+		139 = {isa = PBXFileReference; lastKnownFileType = text.json; path = bluetooth.json; sourceTree = "<group>"; };
+		140 = {isa = PBXFileReference; lastKnownFileType = text.json; path = loader.json; sourceTree = "<group>"; };
+		141 = {isa = PBXFileReference; lastKnownFileType = text.json; path = store_animated.json; sourceTree = "<group>"; };
+		142 = {isa = PBXFileReference; lastKnownFileType = text.json; path = success.json; sourceTree = "<group>"; };
+		143 = {isa = PBXFileReference; lastKnownFileType = text.json; path = failed.json; sourceTree = "<group>"; };
 		701 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = BLEApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		702 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BLEAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		501 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		501 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (044); runOnlyForDeploymentPostprocessing = 0; };
 		502 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
@@ -110,12 +125,12 @@
 			isa = PBXGroup;
 			path = BLEApp;
 			sourceTree = "<group>";
-			children = (610, 620, 630, 640, 650, 119);
+			children = (610, 620, 630, 640, 650, 660, 119);
 		};
 		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118,123,128,129,130,131,132,136); };
 		610 = { isa = PBXGroup; path = App; sourceTree = "<group>"; children = (101, 102); };
 		620 = { isa = PBXGroup; path = UI; sourceTree = "<group>"; children = (621, 622); };
-		621 = { isa = PBXGroup; path = Home; sourceTree = "<group>"; children = (103, 104); };
+		621 = { isa = PBXGroup; path = Home; sourceTree = "<group>"; children = (103, 104, 137); };
 		622 = { isa = PBXGroup; path = Payment; sourceTree = "<group>"; children = (105); };
 		630 = { isa = PBXGroup; path = Domain; sourceTree = "<group>"; children = (631, 632, 633); };
 		631 = { isa = PBXGroup; path = Models; sourceTree = "<group>"; children = (106, 107); };
@@ -128,6 +143,8 @@
 		650 = { isa = PBXGroup; path = Infrastructure; sourceTree = "<group>"; children = (651, 652); };
 		651 = { isa = PBXGroup; path = Prerequisites; sourceTree = "<group>"; children = (115, 116); };
 		652 = { isa = PBXGroup; path = Logging; sourceTree = "<group>"; children = (117); };
+		660 = { isa = PBXGroup; path = Resources; sourceTree = "<group>"; children = (661); };
+		661 = { isa = PBXGroup; path = Lottie; sourceTree = "<group>"; children = (138,139,140,141,142,143); };
 		700 = { isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (701, 702); };
 /* End PBXGroup section */
 
@@ -138,6 +155,7 @@
 			productName = BLEApp;
 			productReference = 701;
 			productType = "com.apple.product-type.application";
+			packageProductDependencies = (905);
 			buildConfigurationList = 851;
 			buildPhases = (501, 503, 504);
 			buildRules = ();
@@ -166,6 +184,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (en, Base);
 			mainGroup = 601;
+			packageReferences = (904);
 			productRefGroup = 700;
 			projectDirPath = "";
 			projectRoot = "";
@@ -174,18 +193,34 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		504 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (019); runOnlyForDeploymentPostprocessing = 0; };
+		504 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (019,038,039,040,041,042,043); runOnlyForDeploymentPostprocessing = 0; };
 		506 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022,024,025,026,027,033,034,035); runOnlyForDeploymentPostprocessing = 0; };
+		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022,024,025,026,027,033,034,035,037); runOnlyForDeploymentPostprocessing = 0; };
 		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018,023,028,029,030,031,032,036); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
 		803 = {isa = PBXTargetDependency; target = 801; targetProxy = 201; };
 /* End PBXTargetDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		904 = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
+			requirement = { kind = upToNextMajorVersion; minimumVersion = 4.5.0; };
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		905 = {
+			isa = XCSwiftPackageProductDependency;
+			package = 904;
+			productName = Lottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		910 = {
