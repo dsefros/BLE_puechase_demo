@@ -49,21 +49,22 @@ struct HomeView: View {
         switch presentation.flowState {
         case .idle:
             IdleWelcomeView(
-                onStartScan: startScanIfLive,
-                isEnabled: presentation.canStartScanAction && presentation.isLiveMode
+                scannerStatus: presentation.scannerStatus,
+                shouldShowScannerStatus: !presentation.canStartScanAction,
+                onStartScan: handleStartScanTap
             )
         case .scanning:
             ScanningStateView(
-                onCancel: stopScanIfLive,
-                isEnabled: presentation.canStopScanAction && presentation.isLiveMode
+                onCancel: handleCancelTap,
+                isEnabled: canInteractWithCurrentPresentation
             )
         case .readyForConfirmation(let candidate):
             CandidateConfirmationView(
                 candidate: candidate,
                 formatAmount: formatAmount,
-                onConfirm: confirmPaymentIfLive,
-                onCancel: cancelConfirmationIfLive,
-                isLiveMode: presentation.isLiveMode
+                onConfirm: handleConfirmTap,
+                onCancel: handleCancelTap,
+                isEnabled: canInteractWithCurrentPresentation
             )
         case .submittingPayment(let candidate):
             SubmittingPaymentView(candidate: candidate, formatAmount: formatAmount)
@@ -71,22 +72,111 @@ struct HomeView: View {
             PaymentSuccessView(
                 candidate: candidate,
                 formatAmount: formatAmount,
-                onDone: cancelConfirmationIfLive,
-                isLiveMode: presentation.isLiveMode
+                onDone: handleDoneTap,
+                isEnabled: canInteractWithCurrentPresentation
             )
         case .paymentError(let candidate, let message):
             PaymentErrorView(
                 candidate: candidate,
                 message: message,
                 formatAmount: formatAmount,
-                onRetry: cancelConfirmationIfLive,
-                isLiveMode: presentation.isLiveMode
+                onRetry: handleRetryTap,
+                isEnabled: canInteractWithCurrentPresentation
             )
         case .scannerUnavailable(let message):
-            ScannerUnavailableView(message: message, onBack: cancelConfirmationIfLive, isLiveMode: presentation.isLiveMode)
+            ScannerUnavailableView(
+                message: scannerStatusMessage(fallback: message),
+                onBack: handleRetryTap,
+                isEnabled: canInteractWithCurrentPresentation
+            )
         case .blockingError(let message):
-            BlockingErrorView(message: message, onBack: cancelConfirmationIfLive, isLiveMode: presentation.isLiveMode)
+            BlockingErrorView(
+                message: scannerStatusMessage(fallback: message),
+                onBack: handleRetryTap,
+                isEnabled: canInteractWithCurrentPresentation
+            )
         }
+    }
+
+    private var canInteractWithCurrentPresentation: Bool {
+        #if DEBUG
+        if demoScenario != .live {
+            return true
+        }
+        #endif
+
+        return presentation.isLiveMode
+    }
+
+    private func scannerStatusMessage(fallback: String) -> String {
+        guard !presentation.scannerStatus.canStartScan else {
+            return fallback
+        }
+
+        return "\(presentation.scannerStatus.title)\n\(presentation.scannerStatus.message)"
+    }
+
+    private func handleStartScanTap() {
+        #if DEBUG
+        if demoScenario != .live {
+            if demoScenario == .ready {
+                demoScenario = .scanning
+            }
+            return
+        }
+        #endif
+
+        startScanIfLive()
+    }
+
+    private func handleCancelTap() {
+        #if DEBUG
+        if demoScenario != .live {
+            demoScenario = .ready
+            return
+        }
+        #endif
+
+        if case .scanning = presentation.flowState {
+            stopScanIfLive()
+        } else {
+            cancelConfirmationIfLive()
+        }
+    }
+
+    private func handleConfirmTap() {
+        #if DEBUG
+        if demoScenario != .live {
+            if demoScenario == .candidate {
+                demoScenario = .submitting
+            }
+            return
+        }
+        #endif
+
+        confirmPaymentIfLive()
+    }
+
+    private func handleDoneTap() {
+        #if DEBUG
+        if demoScenario != .live {
+            demoScenario = .ready
+            return
+        }
+        #endif
+
+        cancelConfirmationIfLive()
+    }
+
+    private func handleRetryTap() {
+        #if DEBUG
+        if demoScenario != .live {
+            demoScenario = .ready
+            return
+        }
+        #endif
+
+        cancelConfirmationIfLive()
     }
 
     private func confirmPaymentIfLive() {
@@ -198,6 +288,35 @@ private struct BluetoothHeroIcon: View {
     }
 }
 
+private struct BluetoothHeroButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .shadow(
+                color: Color.blue.opacity(configuration.isPressed ? 0.20 : 0.10),
+                radius: configuration.isPressed ? 10 : 16,
+                x: 0,
+                y: configuration.isPressed ? 4 : 8
+            )
+            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+private struct BluetoothHeroScanButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            BluetoothHeroIcon()
+                .contentShape(Circle())
+                .padding(18)
+        }
+        .buttonStyle(BluetoothHeroButtonStyle())
+        .accessibilityLabel("Начать сканирование")
+        .accessibilityHint("Нажмите на значок Bluetooth для начала сканирования")
+    }
+}
+
 private struct BluetoothGlyph: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -248,20 +367,25 @@ private struct BluePrimaryButton: View {
 }
 
 private struct IdleWelcomeView: View {
+    let scannerStatus: BleScannerStatus
+    let shouldShowScannerStatus: Bool
     let onStartScan: () -> Void
-    let isEnabled: Bool
+
+    private var hintText: String {
+        if shouldShowScannerStatus {
+            return "\(scannerStatus.title)\n\(scannerStatus.message)"
+        }
+
+        return "Нажмите на значок Bluetooth для начала сканирования"
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            StateContainer(
-                title: "Добро пожаловать!",
-                subtitle: "Это приложение для оплаты QR-кодов по технологии Bluetooth Low Energy",
-                bottomHint: "Нажмите на кнопку для начала сканирования",
-                visual: { BluetoothHeroIcon() }
-            )
-
-            BluePrimaryButton(title: "Начать сканирование", action: onStartScan, isEnabled: isEnabled)
-        }
+        StateContainer(
+            title: "Добро пожаловать!",
+            subtitle: "Это приложение для оплаты QR-кодов по технологии Bluetooth Low Energy",
+            bottomHint: hintText,
+            visual: { BluetoothHeroScanButton(action: onStartScan) }
+        )
     }
 }
 
@@ -307,7 +431,7 @@ private struct CandidateConfirmationView: View {
     let formatAmount: (UInt32) -> String
     let onConfirm: () -> Void
     let onCancel: () -> Void
-    let isLiveMode: Bool
+    let isEnabled: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -319,7 +443,7 @@ private struct CandidateConfirmationView: View {
             )
 
             VStack(spacing: 10) {
-                BluePrimaryButton(title: "Подтвердить", action: onConfirm, isEnabled: isLiveMode)
+                BluePrimaryButton(title: "Подтвердить", action: onConfirm, isEnabled: isEnabled)
                 Button("Отмена", action: onCancel)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(Color.blue)
@@ -347,7 +471,7 @@ private struct PaymentSuccessView: View {
     let candidate: PaymentCandidate
     let formatAmount: (UInt32) -> String
     let onDone: () -> Void
-    let isLiveMode: Bool
+    let isEnabled: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -362,7 +486,7 @@ private struct PaymentSuccessView: View {
                 }
             )
 
-            BluePrimaryButton(title: "Готово", action: onDone, isEnabled: isLiveMode)
+            BluePrimaryButton(title: "Готово", action: onDone, isEnabled: isEnabled)
         }
     }
 }
@@ -372,7 +496,7 @@ private struct PaymentErrorView: View {
     let message: String
     let formatAmount: (UInt32) -> String
     let onRetry: () -> Void
-    let isLiveMode: Bool
+    let isEnabled: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -387,7 +511,7 @@ private struct PaymentErrorView: View {
                 }
             )
 
-            BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isLiveMode)
+            BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
         }
     }
 }
@@ -395,7 +519,7 @@ private struct PaymentErrorView: View {
 private struct ScannerUnavailableView: View {
     let message: String
     let onBack: () -> Void
-    let isLiveMode: Bool
+    let isEnabled: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -406,7 +530,7 @@ private struct ScannerUnavailableView: View {
                 visual: { BluetoothHeroIcon() }
             )
 
-            BluePrimaryButton(title: "Назад", action: onBack, isEnabled: isLiveMode)
+            BluePrimaryButton(title: "Назад", action: onBack, isEnabled: isEnabled)
         }
     }
 }
@@ -414,7 +538,7 @@ private struct ScannerUnavailableView: View {
 private struct BlockingErrorView: View {
     let message: String
     let onBack: () -> Void
-    let isLiveMode: Bool
+    let isEnabled: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -425,7 +549,7 @@ private struct BlockingErrorView: View {
                 visual: { BluetoothHeroIcon() }
             )
 
-            BluePrimaryButton(title: "Назад", action: onBack, isEnabled: isLiveMode)
+            BluePrimaryButton(title: "Назад", action: onBack, isEnabled: isEnabled)
         }
     }
 }
