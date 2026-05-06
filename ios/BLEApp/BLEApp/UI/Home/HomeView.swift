@@ -191,10 +191,38 @@ private struct BluetoothHeroIcon: View {
                 .frame(width: 132, height: 132)
                 .shadow(color: Color.blue.opacity(0.20), radius: 18, x: 0, y: 8)
 
-            Image(systemName: "bluetooth")
-                .font(.system(size: 58, weight: .semibold))
-                .foregroundStyle(Color.blue)
+            BluetoothGlyph()
+                .stroke(Color.blue, style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
+                .frame(width: 58, height: 78)
         }
+    }
+}
+
+private struct BluetoothGlyph: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        let midX = rect.midX
+        let topY = rect.minY + rect.height * 0.08
+        let bottomY = rect.maxY - rect.height * 0.08
+        let centerY = rect.midY
+        let rightX = rect.maxX - rect.width * 0.18
+        let leftX = rect.minX + rect.width * 0.18
+
+        path.move(to: CGPoint(x: midX, y: topY))
+        path.addLine(to: CGPoint(x: midX, y: bottomY))
+
+        path.move(to: CGPoint(x: midX, y: topY))
+        path.addLine(to: CGPoint(x: rightX, y: rect.minY + rect.height * 0.30))
+        path.addLine(to: CGPoint(x: leftX, y: centerY))
+        path.addLine(to: CGPoint(x: rightX, y: rect.maxY - rect.height * 0.30))
+        path.addLine(to: CGPoint(x: midX, y: bottomY))
+
+        path.move(to: CGPoint(x: leftX, y: rect.minY + rect.height * 0.30))
+        path.addLine(to: CGPoint(x: midX, y: centerY))
+        path.addLine(to: CGPoint(x: leftX, y: rect.maxY - rect.height * 0.30))
+
+        return path
     }
 }
 
