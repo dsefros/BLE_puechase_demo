@@ -31,7 +31,7 @@ To validate UI states in Simulator:
 2. Open Home screen.
 3. Use the **Demo scenario (DEBUG)** segmented control.
 4. Keep `Live` selected for real runtime behavior.
-5. Switch to preview scenarios to validate Android-like light full-screen UI states without BLE hardware:
+5. Switch to preview scenarios to validate Android-like light full-screen UI states without BLE hardware. Demo screens also support preview-safe UI actions: tapping the Bluetooth hero in `Ready` moves to `Scanning`, `Cancel` returns to `Ready`, confirmation moves to `Submitting`, and success/error actions return to `Ready` without invoking the real scanner or payment methods.
    - `Unsupported`
    - `Ready`
    - `Scanning`
@@ -44,6 +44,7 @@ Notes:
 - Demo scenarios are DEBUG-only and are not shipped in release builds.
 - Non-live scenarios are preview-only and intentionally do not trigger real scanner actions.
 - Live mode preserves the real injected scanner/parser/payment behavior from `AppContainer`.
+- The idle Home scan trigger is the central Bluetooth hero; there is no separate bottom start-scan button.
 
 
 ## iOS migration step: payment UX + scanner UX + submission boundary
