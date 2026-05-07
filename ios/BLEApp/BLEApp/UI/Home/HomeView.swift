@@ -5,6 +5,9 @@ struct HomeView: View {
 
     #if DEBUG
     @State private var demoScenario: HomeDemoScenario = .live
+    @State private var showSettings = false
+    @State private var isAutoScanEnabled = false
+    @State private var showDeveloperPanel = false
     #endif
 
     private var presentation: HomeScreenPresentation {
@@ -25,25 +28,60 @@ struct HomeView: View {
             AndroidParityBackground()
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                mainStateView
-                    .id(presentation.transitionKey)
-                    .transition(transition(for: presentation.flowState))
-                    .animation(animation(for: presentation.flowState), value: presentation.transitionKey)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            #if DEBUG
+            if showSettings {
+                AndroidParitySettingsView(
+                    isAutoScanEnabled: $isAutoScanEnabled,
+                    showDeveloperPanel: $showDeveloperPanel,
+                    onBack: { withAnimation(.easeInOut(duration: 0.20)) { showSettings = false } }
+                )
+                .transition(.opacity)
+            } else {
+                appContent
+                    .transition(.opacity)
+            }
+            #else
+            appContent
+            #endif
+        }
+    }
 
-                #if DEBUG
+    private var appContent: some View {
+        VStack(spacing: 0) {
+            mainStateView
+                .id(presentation.transitionKey)
+                .transition(transition(for: presentation.flowState))
+                .animation(animation(for: presentation.flowState), value: presentation.transitionKey)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            #if DEBUG
+            if showDeveloperPanel {
                 DemoScenarioPicker(scenario: $demoScenario)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 6)
-                #endif
 
-                #if DEBUG
                 DiagnosticsSection(presentation: presentation)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
-                #endif
             }
+            #endif
+        }
+        .overlay(alignment: .topTrailing) {
+            #if DEBUG
+            if presentation.flowState == .idle {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.20)) { showSettings = true }
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 22, weight: .regular))
+                        .foregroundStyle(HomePalette.brandDarkGray)
+                        .frame(width: 44, height: 44)
+                }
+                .padding(.top, 48)
+                .padding(.trailing, 16)
+                .accessibilityLabel("Настройки")
+            }
+            #endif
         }
     }
 
@@ -242,18 +280,38 @@ struct HomeView: View {
     }
 
     func formatAmount(_ amountMinor: UInt32) -> String {
-        let rubles = amountMinor / 100
-        let kopecks = amountMinor % 100
-        return "\(rubles) RUB \(String(format: "%02d", kopecks)) kop"
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "RUB"
+        formatter.currencySymbol = "₽"
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: Double(amountMinor) / 100.0)) ?? "0,00 ₽"
     }
 }
 
 private enum HomePalette {
-    static let brandOrange = Color(red: 0.09, green: 0.44, blue: 0.78)
-    static let brandBlack = Color.black
-    static let brandDarkGray = Color(red: 0.39, green: 0.39, blue: 0.39)
-    static let brandGreen = Color(red: 0.23, green: 0.74, blue: 0.37)
-    static let brandRed = Color(red: 0.90, green: 0.20, blue: 0.20)
+    static let brandOrange = Color(hex: 0x176FC6)
+    static let brandBlack = Color(hex: 0x000000)
+    static let brandGray = Color(hex: 0xD7E6EA)
+    static let brandDarkGray = Color(hex: 0x2C2C2C)
+    static let brandGreen = Color(hex: 0x27B648)
+    static let brandRed = Color(hex: 0xEA002F)
+    static let white = Color(hex: 0xFFFFFF)
+    static let overlay = Color(red: 235 / 255, green: 235 / 255, blue: 235 / 255, opacity: 0.50)
+    static let brandLightGray = Color(hex: 0xE9F1F3)
+    static let settingsCard = Color(hex: 0xF5F5F5)
+}
+
+private extension Color {
+    init(hex: UInt32) {
+        self.init(
+            red: Double((hex >> 16) & 0xFF) / 255.0,
+            green: Double((hex >> 8) & 0xFF) / 255.0,
+            blue: Double(hex & 0xFF) / 255.0
+        )
+    }
 }
 
 private struct AndroidParityBackground: View {
@@ -265,70 +323,111 @@ private struct AndroidParityBackground: View {
             autoplay: true,
             fallback: { PaleWaveBackground() }
         )
-        .overlay(Color.white.opacity(0.54))
         .blur(radius: 10)
+        .overlay(HomePalette.overlay)
     }
 }
 
 private struct PaleWaveBackground: View {
     var body: some View {
         ZStack {
+            HomePalette.brandGray.opacity(0.40)
             Circle()
-                .fill(HomePalette.brandOrange.opacity(0.07))
-                .frame(width: 340, height: 340)
-                .offset(x: -130, y: -260)
-
+                .fill(HomePalette.brandOrange.opacity(0.08))
+                .frame(width: 420, height: 420)
+                .offset(x: -150, y: -260)
             Circle()
-                .stroke(HomePalette.brandOrange.opacity(0.10), lineWidth: 30)
-                .frame(width: 430, height: 430)
+                .stroke(HomePalette.brandOrange.opacity(0.10), lineWidth: 34)
+                .frame(width: 520, height: 520)
                 .offset(x: 190, y: -290)
-
             RoundedRectangle(cornerRadius: 90, style: .continuous)
-                .fill(HomePalette.brandOrange.opacity(0.05))
-                .frame(width: 520, height: 170)
+                .fill(HomePalette.brandOrange.opacity(0.06))
+                .frame(width: 560, height: 180)
                 .rotationEffect(.degrees(-17))
                 .offset(x: -70, y: 250)
         }
     }
 }
 
-private struct StateContainer<Content: View>: View {
+private struct AndroidCenterLayout<Visual: View>: View {
     let title: String
-    let subtitle: String
+    let subtitle: String?
+    let status: String?
     let bottomHint: String?
-    @ViewBuilder let visual: Content
+    let titleColor: Color
+    let titleMaxLines: Int?
+    let visualTopSpacing: CGFloat
+    let statusTopSpacing: CGFloat
+    @ViewBuilder let visual: Visual
+
+    init(
+        title: String,
+        subtitle: String? = nil,
+        status: String? = nil,
+        bottomHint: String? = nil,
+        titleColor: Color = HomePalette.brandBlack,
+        titleMaxLines: Int? = nil,
+        visualTopSpacing: CGFloat = 16,
+        statusTopSpacing: CGFloat = 32,
+        @ViewBuilder visual: () -> Visual
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.status = status
+        self.bottomHint = bottomHint
+        self.titleColor = titleColor
+        self.titleMaxLines = titleMaxLines
+        self.visualTopSpacing = visualTopSpacing
+        self.statusTopSpacing = statusTopSpacing
+        self.visual = visual()
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 24)
+            Spacer(minLength: 32)
 
-            VStack(spacing: 18) {
-                visual
-                Text(title)
-                    .font(.system(size: 34, weight: .bold))
-                    .foregroundStyle(Color.black)
-                    .multilineTextAlignment(.center)
+            Text(title)
+                .font(.system(size: 24, weight: .black))
+                .lineSpacing(8)
+                .foregroundStyle(titleColor)
+                .multilineTextAlignment(.center)
+                .lineLimit(titleMaxLines)
+                .minimumScaleFactor(0.86)
 
+            if let subtitle {
                 Text(subtitle)
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(Color(.darkGray))
+                    .font(.system(size: 14, weight: .regular))
+                    .lineSpacing(6)
+                    .foregroundStyle(HomePalette.brandDarkGray)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 18)
-
-                if let bottomHint {
-                    Text(bottomHint)
-                        .font(.system(size: 16, weight: .regular))
-                        .foregroundStyle(Color(.gray))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 18)
-                        .padding(.top, 4)
-                }
+                    .padding(.top, 16)
             }
 
-            Spacer(minLength: 24)
+            visual
+                .padding(.top, visualTopSpacing)
+
+            if let status {
+                Text(status)
+                    .font(.system(size: 14, weight: .regular))
+                    .tracking(0.8)
+                    .foregroundStyle(HomePalette.brandBlack)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, statusTopSpacing)
+            }
+
+            if let bottomHint {
+                Text(bottomHint)
+                    .font(.system(size: 14, weight: .regular))
+                    .lineSpacing(10)
+                    .foregroundStyle(HomePalette.brandBlack)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 8)
+            }
+
+            Spacer(minLength: 32)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 22)
     }
 }
 
@@ -339,30 +438,14 @@ private struct BluetoothHeroIcon: View {
                 .fill(HomePalette.brandOrange.opacity(0.18))
                 .frame(width: 170, height: 170)
                 .blur(radius: 2)
-
             Circle()
-                .fill(Color.white)
+                .fill(HomePalette.white)
                 .frame(width: 132, height: 132)
                 .shadow(color: HomePalette.brandOrange.opacity(0.20), radius: 18, x: 0, y: 8)
-
-            BluetoothGlyph()
-                .stroke(HomePalette.brandOrange, style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
-                .frame(width: 58, height: 78)
+            Image(systemName: "antenna.radiowaves.left.and.right")
+                .font(.system(size: 58, weight: .semibold))
+                .foregroundStyle(HomePalette.brandOrange)
         }
-    }
-}
-
-private struct BluetoothHeroButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .shadow(
-                color: HomePalette.brandOrange.opacity(configuration.isPressed ? 0.20 : 0.10),
-                radius: configuration.isPressed ? 10 : 16,
-                x: 0,
-                y: configuration.isPressed ? 4 : 8
-            )
-            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
@@ -370,56 +453,30 @@ private struct BluetoothHeroScanButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            ZStack {
-                LottieView(
-                    animationName: "bluetooth",
-                    loopMode: .loop,
-                    contentMode: .aspectFit,
-                    autoplay: true,
-                    fallback: { BluetoothHeroIcon() }
-                )
-                .frame(width: 380, height: 380)
+        ZStack {
+            LottieView(
+                animationName: "bluetooth",
+                loopMode: .loop,
+                contentMode: .aspectFit,
+                autoplay: true,
+                fallback: { BluetoothHeroIcon() }
+            )
+            .frame(width: 380, height: 380)
+            .allowsHitTesting(false)
 
+            Button(action: action) {
                 Circle()
                     .fill(Color.clear)
                     .frame(width: 150, height: 150)
                     .contentShape(Circle())
             }
-            .frame(width: 380, height: 380)
+            .buttonStyle(.plain)
+            .frame(width: 150, height: 150)
             .contentShape(Circle())
+            .accessibilityLabel("Начать сканирование")
+            .accessibilityHint("Нажмите на кнопку для начала сканирования")
         }
-        .buttonStyle(BluetoothHeroButtonStyle())
-        .accessibilityLabel("Начать сканирование")
-        .accessibilityHint("Нажмите на значок Bluetooth для начала сканирования")
-    }
-}
-
-private struct BluetoothGlyph: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-
-        let midX = rect.midX
-        let topY = rect.minY + rect.height * 0.08
-        let bottomY = rect.maxY - rect.height * 0.08
-        let centerY = rect.midY
-        let rightX = rect.maxX - rect.width * 0.18
-        let leftX = rect.minX + rect.width * 0.18
-
-        path.move(to: CGPoint(x: midX, y: topY))
-        path.addLine(to: CGPoint(x: midX, y: bottomY))
-
-        path.move(to: CGPoint(x: midX, y: topY))
-        path.addLine(to: CGPoint(x: rightX, y: rect.minY + rect.height * 0.30))
-        path.addLine(to: CGPoint(x: leftX, y: centerY))
-        path.addLine(to: CGPoint(x: rightX, y: rect.maxY - rect.height * 0.30))
-        path.addLine(to: CGPoint(x: midX, y: bottomY))
-
-        path.move(to: CGPoint(x: leftX, y: rect.minY + rect.height * 0.30))
-        path.addLine(to: CGPoint(x: midX, y: centerY))
-        path.addLine(to: CGPoint(x: leftX, y: rect.maxY - rect.height * 0.30))
-
-        return path
+        .frame(width: 380, height: 380)
     }
 }
 
@@ -433,8 +490,8 @@ private struct BluePrimaryButton: View {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
                 .frame(maxWidth: .infinity)
-                .frame(height: 64)
-                .foregroundStyle(.white)
+                .frame(height: 56)
+                .foregroundStyle(HomePalette.white)
                 .background(isEnabled ? HomePalette.brandOrange : HomePalette.brandOrange.opacity(0.35))
                 .clipShape(Capsule())
         }
@@ -453,15 +510,15 @@ private struct IdleWelcomeView: View {
         if shouldShowScannerStatus {
             return "\(scannerStatus.title)\n\(scannerStatus.message)"
         }
-
-        return "Нажмите на значок Bluetooth для начала сканирования"
+        return "Нажмите на кнопку\nдля начала сканирования"
     }
 
     var body: some View {
-        StateContainer(
+        AndroidCenterLayout(
             title: "Добро пожаловать!",
-            subtitle: "Это приложение для оплаты QR-кодов по технологии Bluetooth Low Energy",
+            subtitle: "Это приложение для оплаты QR-кодов\nпо технологии Bluetooth Low Energy",
             bottomHint: hintText,
+            visualTopSpacing: 8,
             visual: { BluetoothHeroScanButton(action: onStartScan) }
         )
     }
@@ -472,11 +529,13 @@ private struct ScanningStateView: View {
     let isEnabled: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            StateContainer(
+        ZStack(alignment: .bottom) {
+            AndroidCenterLayout(
                 title: "Пожалуйста, подождите",
-                subtitle: "Сканирование...",
-                bottomHint: nil,
+                status: "Сканирование...",
+                titleMaxLines: 1,
+                visualTopSpacing: 16,
+                statusTopSpacing: 32,
                 visual: { ScanningLoaderView() }
             )
 
@@ -503,7 +562,6 @@ private struct DotsLoaderFallback: View {
         TimelineView(.animation) { timeline in
             let elapsed = timeline.date.timeIntervalSinceReferenceDate
             let activeDot = Int((elapsed / 0.35).truncatingRemainder(dividingBy: 3))
-
             HStack(spacing: 10) {
                 ForEach(0..<3, id: \.self) { index in
                     Circle()
@@ -525,59 +583,59 @@ private struct CandidateConfirmationView: View {
     let isEnabled: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 14) {
-                Button(action: onCancel) {
-                    Text("‹")
-                        .font(.system(size: 34, weight: .regular))
+        ZStack(alignment: .bottom) {
+            VStack(spacing: 0) {
+                HStack(spacing: 16) {
+                    Button(action: onCancel) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(HomePalette.brandBlack)
+                            .frame(width: 28, height: 28)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isEnabled)
+                    .accessibilityLabel("Назад")
+
+                    Text("Подтверждение платежа")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(HomePalette.brandBlack)
-                        .frame(width: 44, height: 44)
+
+                    Spacer()
                 }
-                .disabled(!isEnabled)
-                .accessibilityLabel("Назад")
+                .padding(.vertical, 12)
 
-                Text("Подтверждение платежа")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(HomePalette.brandBlack)
+                Spacer().frame(height: 24)
 
-                Spacer()
+                VStack(spacing: 0) {
+                    LottieView(
+                        animationName: "store_animated",
+                        loopMode: .loop,
+                        contentMode: .aspectFit,
+                        autoplay: true,
+                        fallback: { BluetoothHeroIcon() }
+                    )
+                    .frame(width: 200, height: 200)
+                    .padding(.bottom, 24)
+
+                    ConfirmationSection(label: "Магазин", value: candidate.merchant.isEmpty ? "—" : candidate.merchant)
+
+                    Spacer().frame(height: 12)
+                    Divider().background(HomePalette.brandLightGray)
+                    Spacer().frame(height: 12)
+
+                    ConfirmationSection(label: "Сумма к оплате", value: formatAmount(candidate.amountMinor), isAmount: true)
+                }
+                .padding(32)
+                .frame(maxWidth: .infinity)
+                .background(HomePalette.white)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .shadow(color: Color.black.opacity(0.18), radius: 12, x: 0, y: 8)
+                .padding(.bottom, 16)
+
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 18)
-
-            Spacer(minLength: 18)
-
-            VStack(spacing: 22) {
-                LottieView(
-                    animationName: "store_animated",
-                    loopMode: .loop,
-                    contentMode: .aspectFit,
-                    autoplay: true,
-                    fallback: { BluetoothHeroIcon() }
-                )
-                .frame(width: 200, height: 200)
-
-                ConfirmationSection(label: "Магазин", value: candidate.merchant.isEmpty ? "—" : candidate.merchant)
-
-                Divider()
-
-                ConfirmationSection(label: "Сумма к оплате", value: formatAmount(candidate.amountMinor), isAmount: true)
-
-                #if DEBUG
-                Text("QRC ID: \(candidate.qrcID)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                #endif
-            }
-            .padding(32)
-            .frame(maxWidth: .infinity)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: Color.black.opacity(0.12), radius: 18, x: 0, y: 10)
             .padding(.horizontal, 28)
-
-            Spacer(minLength: 18)
+            .padding(.vertical, 18)
 
             BluePrimaryButton(title: "Оплатить \(formatAmount(candidate.amountMinor))", action: onConfirm, isEnabled: isEnabled)
         }
@@ -595,9 +653,9 @@ private struct ConfirmationSection: View {
                 .font(.system(size: 14, weight: .regular))
                 .foregroundStyle(HomePalette.brandOrange)
                 .tracking(0.5)
-
             Text(value)
-                .font(.system(size: isAmount ? 30 : 22, weight: isAmount ? .black : .bold))
+                .font(.system(size: isAmount ? 26 : 24, weight: isAmount ? .black : .bold))
+                .lineSpacing(isAmount ? 14 : 6)
                 .foregroundStyle(isAmount ? HomePalette.brandBlack : HomePalette.brandDarkGray)
                 .multilineTextAlignment(.center)
                 .lineLimit(4)
@@ -612,10 +670,11 @@ private struct SubmittingPaymentView: View {
     let formatAmount: (UInt32) -> String
 
     var body: some View {
-        StateContainer(
+        AndroidCenterLayout(
             title: "Пожалуйста, подождите",
-            subtitle: "отправка платежа...",
-            bottomHint: nil,
+            status: "отправка платежа...",
+            visualTopSpacing: 32,
+            statusTopSpacing: 32,
             visual: { ScanningLoaderView() }
         )
         .accessibilityHint("Платеж для \(candidate.merchant), сумма \(formatAmount(candidate.amountMinor))")
@@ -629,6 +688,7 @@ private struct PaymentSuccessView: View {
     let isEnabled: Bool
 
     @State private var progress: CGFloat = 0
+    @State private var isExiting = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -636,10 +696,11 @@ private struct PaymentSuccessView: View {
 
             Text("Одобрено")
                 .font(.system(size: 24, weight: .black))
+                .lineSpacing(8)
                 .foregroundStyle(HomePalette.brandGreen)
                 .multilineTextAlignment(.center)
 
-            Spacer().frame(height: 80)
+            Spacer().frame(height: 128)
 
             LottieView(
                 animationName: "success",
@@ -654,7 +715,7 @@ private struct PaymentSuccessView: View {
             )
             .frame(width: 150, height: 150)
 
-            Spacer().frame(height: 56)
+            Spacer().frame(height: 64)
 
             Text("Оплата")
                 .font(.system(size: 16, weight: .regular))
@@ -663,14 +724,19 @@ private struct PaymentSuccessView: View {
 
             Text(formatAmount(candidate.amountMinor))
                 .font(.system(size: 24, weight: .black))
+                .lineSpacing(8)
                 .foregroundStyle(HomePalette.brandBlack)
                 .padding(.top, 8)
 
-            ProgressView(value: progress)
-                .progressViewStyle(.linear)
-                .tint(HomePalette.brandGreen)
-                .frame(maxWidth: 220)
-                .padding(.top, 24)
+            GeometryReader { proxy in
+                ProgressView(value: progress)
+                    .progressViewStyle(.linear)
+                    .tint(HomePalette.brandGreen)
+                    .frame(width: proxy.size.width * 0.6, height: 4)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(height: 4)
+            .padding(.top, 24)
 
             Text("Возврат на главный экран...")
                 .font(.system(size: 12, weight: .regular))
@@ -678,19 +744,21 @@ private struct PaymentSuccessView: View {
                 .padding(.top, 8)
 
             Spacer(minLength: 18)
-
-            BluePrimaryButton(title: "Готово", action: onDone, isEnabled: isEnabled)
         }
         .padding(.horizontal, 28)
+        .opacity(isExiting ? 0 : 1)
+        .scaleEffect(isExiting ? 0.001 : 1)
+        .animation(.easeInOut(duration: 0.50), value: isExiting)
         .onAppear {
             progress = 0
-            withAnimation(.linear(duration: 5)) {
-                progress = 1
-            }
+            withAnimation(.linear(duration: 5)) { progress = 1 }
         }
         .task {
-            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            try? await Task.sleep(nanoseconds: 4_500_000_000)
             guard !Task.isCancelled, isEnabled else { return }
+            isExiting = true
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard !Task.isCancelled else { return }
             onDone()
         }
     }
@@ -704,61 +772,14 @@ private struct PaymentErrorView: View {
     let isEnabled: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                Button(action: onRetry) {
-                    Text("×")
-                        .font(.system(size: 28, weight: .regular))
-                        .foregroundStyle(HomePalette.brandDarkGray)
-                        .frame(width: 44, height: 44)
-                }
-                .disabled(!isEnabled)
-                .accessibilityLabel("На главный экран")
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 18)
-
-            Spacer(minLength: 24)
-
-            Text("Ошибка оплаты")
-                .font(.system(size: 24, weight: .black))
-                .foregroundStyle(HomePalette.brandRed)
-                .multilineTextAlignment(.center)
-
-            LottieView(
-                animationName: "failed",
-                loopMode: .playOnce,
-                contentMode: .aspectFit,
-                autoplay: true,
-                fallback: {
-                    Circle()
-                        .stroke(HomePalette.brandRed, lineWidth: 12)
-                        .overlay(Text("!").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandRed))
-                }
-            )
-            .frame(width: 250, height: 250)
-            .padding(.top, 22)
-
-            Text("\(candidate.merchant)\n\(formatAmount(candidate.amountMinor))")
-                .font(.system(size: 14, weight: .regular))
-                .lineSpacing(8)
-                .foregroundStyle(HomePalette.brandBlack)
-                .multilineTextAlignment(.center)
-                .padding(.top, 10)
-
-            Text(message)
-                .font(.system(size: 14, weight: .regular))
-                .lineSpacing(6)
-                .foregroundStyle(HomePalette.brandDarkGray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 28)
-                .padding(.top, 14)
-
-            Spacer(minLength: 24)
-
-            BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
-        }
+        AndroidErrorView(
+            title: "Ошибка оплаты",
+            message: message,
+            onBack: onRetry,
+            onRetry: onRetry,
+            isEnabled: isEnabled
+        )
+        .accessibilityHint("Платеж для \(candidate.merchant), сумма \(formatAmount(candidate.amountMinor))")
     }
 }
 
@@ -768,16 +789,7 @@ private struct ScannerUnavailableView: View {
     let isEnabled: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            StateContainer(
-                title: "Сканер недоступен",
-                subtitle: message,
-                bottomHint: nil,
-                visual: { BluetoothHeroIcon() }
-            )
-
-            BluePrimaryButton(title: "Назад", action: onBack, isEnabled: isEnabled)
-        }
+        AndroidErrorView(title: "Ошибка", message: message, onBack: onBack, onRetry: onBack, isEnabled: isEnabled)
     }
 }
 
@@ -787,18 +799,174 @@ private struct BlockingErrorView: View {
     let isEnabled: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            StateContainer(
-                title: "Требуется действие",
-                subtitle: message,
-                bottomHint: nil,
-                visual: { BluetoothHeroIcon() }
-            )
+        AndroidErrorView(title: "Ошибка", message: message, onBack: onBack, onRetry: onBack, isEnabled: isEnabled)
+    }
+}
 
-            BluePrimaryButton(title: "Назад", action: onBack, isEnabled: isEnabled)
+private struct AndroidErrorView: View {
+    let title: String
+    let message: String
+    let onBack: () -> Void
+    let onRetry: () -> Void
+    let isEnabled: Bool
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            VStack(spacing: 0) {
+                HStack {
+                    Spacer()
+                    Button(action: onBack) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 22, weight: .regular))
+                            .foregroundStyle(HomePalette.brandDarkGray)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isEnabled)
+                    .accessibilityLabel("На главный экран")
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+
+                Spacer(minLength: 24)
+
+                Text(title)
+                    .font(.system(size: 24, weight: .black))
+                    .lineSpacing(8)
+                    .foregroundStyle(HomePalette.brandRed)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+
+                Spacer().frame(height: 32)
+
+                LottieView(
+                    animationName: "failed",
+                    loopMode: .playOnce,
+                    contentMode: .aspectFit,
+                    autoplay: true,
+                    fallback: {
+                        Circle()
+                            .stroke(HomePalette.brandRed, lineWidth: 12)
+                            .overlay(Text("!").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandRed))
+                    }
+                )
+                .frame(width: 250, height: 250)
+
+                Spacer().frame(height: 32)
+
+                Text(message)
+                    .font(.system(size: 14, weight: .regular))
+                    .lineSpacing(10)
+                    .foregroundStyle(HomePalette.brandBlack)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+
+                Spacer(minLength: 24)
+            }
+            .padding(.horizontal, 28)
+            .padding(.vertical, 22)
+
+            BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
         }
     }
 }
+
+#if DEBUG
+private struct AndroidParitySettingsView: View {
+    @Binding var isAutoScanEnabled: Bool
+    @Binding var showDeveloperPanel: Bool
+    let onBack: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                Button(action: onBack) {
+                    Image(systemName: "arrow.left")
+                        .font(.system(size: 20, weight: .regular))
+                        .foregroundStyle(HomePalette.brandBlack)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Назад")
+
+                Text("Настройки")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(HomePalette.brandBlack)
+
+                Spacer()
+            }
+            .padding(16)
+
+            VStack(spacing: 16) {
+                HStack(alignment: .center, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Автоматическое сканирование")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(HomePalette.brandBlack)
+                        Text("Запускать BLE-сканирование сразу после открытия приложения")
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundStyle(.gray)
+                        Text("Локальный DEBUG-переключатель; production-поведение не меняется")
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundStyle(.gray)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $isAutoScanEnabled)
+                        .labelsHidden()
+                        .tint(HomePalette.brandOrange)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity)
+                .background(HomePalette.settingsCard)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: Color.black.opacity(0.10), radius: 4, x: 0, y: 2)
+
+                HStack(alignment: .center, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Debug-панель")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(HomePalette.brandBlack)
+                        Text("Показывать локальные сценарии и диагностику только для разработки")
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundStyle(.gray)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $showDeveloperPanel)
+                        .labelsHidden()
+                        .tint(HomePalette.brandOrange)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity)
+                .background(HomePalette.settingsCard)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: Color.black.opacity(0.10), radius: 4, x: 0, y: 2)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("О приложении")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(HomePalette.brandBlack)
+                    Text("Версия 1.0.0 (by DEfros and EAks)")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.gray)
+                    Text("Somers QR BLE")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.gray)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(HomePalette.settingsCard)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: Color.black.opacity(0.10), radius: 4, x: 0, y: 2)
+
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+    }
+}
+#endif
 
 #if DEBUG
 private struct DiagnosticsSection: View {

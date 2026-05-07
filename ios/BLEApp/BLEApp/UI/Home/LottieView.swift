@@ -99,6 +99,7 @@ struct LottieAnimationViewRepresentable: UIViewRepresentable {
         }
 
         animationView.contentMode = contentMode.uiViewContentMode
+        animationView.clipsToBounds = contentMode == .aspectFill
         animationView.loopMode = loopMode.lottieLoopMode
         animationView.animationSpeed = playbackSpeed
 
