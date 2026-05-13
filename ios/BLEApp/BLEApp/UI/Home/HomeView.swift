@@ -25,7 +25,7 @@ struct HomeView: View {
             Color(.systemBackground)
                 .ignoresSafeArea()
 
-            AndroidParityBackground()
+            backgroundView
                 .ignoresSafeArea()
 
             #if DEBUG
@@ -46,12 +46,20 @@ struct HomeView: View {
         }
     }
 
+    @ViewBuilder
+    private var backgroundView: some View {
+        if presentation.flowState == .idle {
+            AndroidParityBackground()
+        } else {
+            StaticFlowBackground()
+        }
+    }
+
     private var appContent: some View {
         VStack(spacing: 0) {
             mainStateView
                 .id(presentation.transitionKey)
                 .transition(transition(for: presentation.flowState))
-                .animation(animation(for: presentation.flowState), value: presentation.transitionKey)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             #if DEBUG
@@ -145,10 +153,7 @@ struct HomeView: View {
     private func transition(for state: PaymentFlowState) -> AnyTransition {
         switch state {
         case .scanning:
-            return .asymmetric(
-                insertion: .opacity.combined(with: .scale(scale: 0.9)),
-                removal: .opacity.combined(with: .scale(scale: 0.95))
-            )
+            return .identity
         case .readyForConfirmation:
             return .asymmetric(
                 insertion: .move(edge: .bottom).combined(with: .opacity),
@@ -157,27 +162,9 @@ struct HomeView: View {
         case .paymentSuccess:
             return .opacity.combined(with: .scale(scale: 0.96))
         case .paymentError, .scannerUnavailable, .blockingError:
-            return .asymmetric(
-                insertion: .move(edge: .leading).combined(with: .opacity),
-                removal: .move(edge: .trailing).combined(with: .opacity)
-            )
+            return .identity
         default:
             return .opacity
-        }
-    }
-
-    private func animation(for state: PaymentFlowState) -> Animation {
-        switch state {
-        case .scanning:
-            return .easeInOut(duration: 0.30)
-        case .readyForConfirmation:
-            return .interpolatingSpring(stiffness: 180, damping: 24)
-        case .paymentSuccess:
-            return .easeInOut(duration: 0.50)
-        case .paymentError, .scannerUnavailable, .blockingError:
-            return .easeInOut(duration: 0.30)
-        default:
-            return .easeInOut(duration: 0.25)
         }
     }
 
@@ -295,7 +282,7 @@ struct HomeView: View {
         viewModel.stopScan()
     }
 
-    func formatAmount(_ amountMinor: UInt32) -> String {
+    private static let rubFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.locale = Locale(identifier: "ru_RU")
         formatter.numberStyle = .currency
@@ -303,7 +290,11 @@ struct HomeView: View {
         formatter.currencySymbol = "₽"
         formatter.minimumFractionDigits = 2
         formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: Double(amountMinor) / 100.0)) ?? "0,00 ₽"
+        return formatter
+    }()
+
+    func formatAmount(_ amountMinor: UInt32) -> String {
+        Self.rubFormatter.string(from: NSNumber(value: Double(amountMinor) / 100.0)) ?? "0,00 ₽"
     }
 }
 
@@ -341,6 +332,13 @@ private struct AndroidParityBackground: View {
         )
         .blur(radius: 10)
         .overlay(HomePalette.overlay)
+    }
+}
+
+private struct StaticFlowBackground: View {
+    var body: some View {
+        PaleWaveBackground()
+            .overlay(HomePalette.overlay)
     }
 }
 
@@ -563,20 +561,42 @@ private struct ScanningStateView: View {
     let isEnabled: Bool
 
     var body: some View {
-        AndroidCenterLayout(
-            title: "Пожалуйста, подождите",
-            status: "Сканирование...",
-            titleMaxLines: 1,
-            visualTopSpacing: 16,
-            statusTopSpacing: 32,
-            visual: { ScanningLoaderView() }
-        )
-        .padding(.bottom, 24)
-        .safeAreaInset(edge: .bottom) {
+        VStack(spacing: 0) {
+            FixedTopBar()
+
+            VStack(spacing: 0) {
+                Text("Пожалуйста, подождите")
+                    .font(.system(size: 24, weight: .black))
+                    .foregroundStyle(HomePalette.brandBlack)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+                    .padding(.horizontal, 28)
+
+                ScanningLoaderView()
+                    .padding(.top, 16)
+
+                Text("Сканирование...")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(HomePalette.brandOrange)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 32)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
             BottomCTAContainer {
                 BluePrimaryButton(title: "Отмена", action: onCancel, isEnabled: isEnabled)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct FixedTopBar: View {
+    var body: some View {
+        Color.clear
+            .frame(height: 60)
+            .frame(maxWidth: .infinity)
     }
 }
 
@@ -589,13 +609,14 @@ private struct ScanningLoaderView: View {
             autoplay: true,
             fallback: { DotsLoaderFallback() }
         )
-        .frame(width: 380, height: 380)
+        .frame(width: 220, height: 220)
+        .allowsHitTesting(false)
     }
 }
 
 private struct DotsLoaderFallback: View {
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.periodic(from: .now, by: 0.25)) { timeline in
             let elapsed = timeline.date.timeIntervalSinceReferenceDate
             let activeDot = Int((elapsed / 0.35).truncatingRemainder(dividingBy: 3))
             HStack(spacing: 10) {
@@ -853,65 +874,57 @@ private struct AndroidErrorView: View {
     let isEnabled: Bool
 
     var body: some View {
-        GeometryReader { proxy in
-            let isCompactHeight = proxy.size.height < 620
-            let iconSize = min(250, max(160, proxy.size.width - 56))
-
-            VStack(spacing: 0) {
-                closeRow
-
-                if isCompactHeight {
-                    ScrollView {
-                        centerContent(iconSize: iconSize)
-                            .padding(.vertical, 12)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    Spacer(minLength: 0)
-                    centerContent(iconSize: iconSize)
-                    Spacer(minLength: 0)
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 22, weight: .regular))
+                        .foregroundStyle(HomePalette.brandDarkGray)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .disabled(!isEnabled)
+                .accessibilityLabel("На главный экран")
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-        }
-        .safeAreaInset(edge: .bottom) {
+            .frame(height: 60)
+            .padding(.horizontal, 16)
+
+            ErrorContent(title: title, message: message)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .padding(.horizontal, 28)
+
             BottomCTAContainer {
                 BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
 
-    private var closeRow: some View {
-        HStack {
-            Spacer()
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(HomePalette.brandDarkGray)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-            .disabled(!isEnabled)
-            .accessibilityLabel("На главный экран")
+private struct ErrorContent: View {
+    let title: String
+    let message: String
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            content(iconSize: 220, verticalSpacing: 32)
+            content(iconSize: 160, verticalSpacing: 18)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
     }
 
-    private func centerContent(iconSize: CGFloat) -> some View {
+    private func content(iconSize: CGFloat, verticalSpacing: CGFloat) -> some View {
         VStack(spacing: 0) {
             Text(title)
                 .font(.system(size: 24, weight: .black))
-                .lineSpacing(8)
                 .foregroundStyle(HomePalette.brandRed)
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, 28)
 
-            Spacer().frame(height: 32)
+            Spacer().frame(height: verticalSpacing)
 
             LottieView(
                 animationName: "failed",
@@ -925,21 +938,19 @@ private struct AndroidErrorView: View {
                 }
             )
             .frame(width: iconSize, height: iconSize)
+            .allowsHitTesting(false)
 
-            Spacer().frame(height: 32)
+            Spacer().frame(height: verticalSpacing)
 
             Text(message)
                 .font(.system(size: 14, weight: .regular))
                 .lineSpacing(10)
                 .foregroundStyle(HomePalette.brandBlack)
                 .multilineTextAlignment(.center)
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(4)
+                .minimumScaleFactor(0.78)
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, 28)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.bottom, 24)
     }
 }
 

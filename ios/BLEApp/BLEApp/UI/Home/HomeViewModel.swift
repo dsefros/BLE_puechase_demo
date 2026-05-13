@@ -15,7 +15,6 @@ final class HomeViewModel: ObservableObject {
         scannerStatusPresenter.status(for: scannerState, isScanning: isScanning)
     }
 
-
     var canShowScanButtons: Bool {
         if case .idle = flowState { return true }
         if case .scanning = flowState { return true }
@@ -39,6 +38,8 @@ final class HomeViewModel: ObservableObject {
 
     private let scanTimeoutSeconds: TimeInterval
     private var scanTimeoutTask: Task<Void, Never>?
+    private var activeScanID: UUID?
+    private var lastDiagnosticsUpdate = Date.distantPast
 
     init(container: AppContainer, scanTimeoutSeconds: TimeInterval = TimeInterval(BleConfig.scanTimeoutSeconds)) {
         self.container = container
@@ -48,43 +49,40 @@ final class HomeViewModel: ObservableObject {
 
         container.scanner.stateDidChange = { [weak self] state in
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.scannerState = state
-                self.isScanning = self.container.scanner.isScanning
-
-                if case .scanning = self.flowState, !self.isScanning, !self.scannerStatusPresenter.status(for: state, isScanning: false).canStartScan {
-                    self.cancelScanTimeout()
-                    self.flowState = self.scannerErrorState(for: state)
-                }
+                self?.handleScannerStateChange(state)
             }
         }
 
         container.scanner.advertisementDidDiscover = { [weak self] event in
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.discoveredAdvertisements.removeAll { $0.peripheralID == event.peripheralID }
-                self.discoveredAdvertisements.insert(event, at: 0)
-                self.discoveredAdvertisements = Array(self.discoveredAdvertisements.prefix(self.maxEvents))
-                self.processAdvertisement(event)
+                self?.handleAdvertisement(event)
             }
         }
     }
 
     func startScan() {
+        guard case .idle = flowState else { return }
+
         cancelScanTimeout()
         latestValidCandidate = nil
+        setLatestParseRejection(nil)
+
+        let scanID = UUID()
+        activeScanID = scanID
 
         let result = container.scanner.startScan()
-        isScanning = container.scanner.isScanning
+        refreshScannerSnapshot()
 
         switch result {
         case .started:
-            flowState = .scanning
-            scheduleScanTimeout()
+            setFlowState(.scanning)
+            scheduleScanTimeout(for: scanID)
         case .stopped:
-            flowState = .idle
+            activeScanID = nil
+            setFlowState(.idle)
         case .unavailable(let state):
-            flowState = scannerErrorState(for: state)
+            activeScanID = nil
+            setFlowState(scannerErrorState(for: state))
         }
 
         container.logger.log("Start scan result: \(result)")
@@ -92,10 +90,11 @@ final class HomeViewModel: ObservableObject {
 
     func stopScan() {
         cancelScanTimeout()
+        activeScanID = nil
         let result = container.scanner.stopScan()
-        isScanning = container.scanner.isScanning
-        if !isScanning, case .scanning = flowState {
-            flowState = .idle
+        refreshScannerSnapshot()
+        if case .scanning = flowState {
+            setFlowState(.idle)
         }
         container.logger.log("Stop scan result: \(result)")
     }
@@ -103,6 +102,7 @@ final class HomeViewModel: ObservableObject {
     func retryCurrentError() {
         switch flowState {
         case .scannerUnavailable, .blockingError:
+            returnToIdle()
             startScan()
         case .paymentError:
             // MVP retry semantics: restart BLE discovery rather than resubmitting a potentially stale payment.
@@ -124,44 +124,85 @@ final class HomeViewModel: ObservableObject {
 
     func confirmPayment() async {
         cancelScanTimeout()
+        activeScanID = nil
         guard case let .readyForConfirmation(candidate) = flowState else { return }
-        flowState = .submittingPayment(candidate)
+        setFlowState(.submittingPayment(candidate))
         let submission = await container.paymentSubmissionService.submit(candidate: candidate)
         switch submission {
         case .success:
-            flowState = .paymentSuccess(candidate)
+            setFlowState(.paymentSuccess(candidate))
         case .failure(let message):
-            flowState = .paymentError(candidate, message: message)
+            setFlowState(.paymentError(candidate, message: message))
         }
     }
 
     func cancelConfirmation() {
         cancelScanTimeout()
         latestValidCandidate = nil
+        refreshScannerSnapshot()
         if isScanning {
-            flowState = .scanning
-            scheduleScanTimeout()
+            let scanID = UUID()
+            activeScanID = scanID
+            setFlowState(.scanning)
+            scheduleScanTimeout(for: scanID)
         } else {
-            flowState = .idle
+            activeScanID = nil
+            setFlowState(.idle)
         }
     }
 
     private func returnToIdle() {
         cancelScanTimeout()
+        activeScanID = nil
         _ = container.scanner.stopScan()
-        isScanning = container.scanner.isScanning
+        refreshScannerSnapshot()
         latestValidCandidate = nil
-        flowState = .idle
+        setLatestParseRejection(nil)
+        setFlowState(.idle)
     }
 
-    private func scheduleScanTimeout() {
+    private func handleScannerStateChange(_ state: BleScannerState) {
+        setScannerState(state)
+        setIsScanning(container.scanner.isScanning)
+
+        guard activeScanID != nil, case .scanning = flowState else { return }
+        let status = scannerStatusPresenter.status(for: state, isScanning: isScanning)
+        if !isScanning, !status.canStartScan {
+            cancelScanTimeout()
+            activeScanID = nil
+            setFlowState(scannerErrorState(for: state))
+        }
+    }
+
+    private func handleAdvertisement(_ event: BleDiscoveredAdvertisement) {
+        guard activeScanID != nil, case .scanning = flowState else { return }
+        recordDiagnosticAdvertisement(event)
+        processAdvertisement(event)
+    }
+
+    private func recordDiagnosticAdvertisement(_ event: BleDiscoveredAdvertisement) {
+        #if DEBUG
+        let now = Date()
+        guard now.timeIntervalSince(lastDiagnosticsUpdate) >= 0.25 else { return }
+        lastDiagnosticsUpdate = now
+        var events = discoveredAdvertisements
+        events.removeAll { $0.peripheralID == event.peripheralID }
+        events.insert(event, at: 0)
+        let trimmed = Array(events.prefix(maxEvents))
+        if trimmed.map(\.peripheralID) != discoveredAdvertisements.map(\.peripheralID) {
+            discoveredAdvertisements = trimmed
+        }
+        #endif
+    }
+
+    private func scheduleScanTimeout(for scanID: UUID) {
         guard scanTimeoutSeconds > 0 else { return }
         scanTimeoutTask?.cancel()
         let nanoseconds = UInt64(scanTimeoutSeconds * 1_000_000_000)
         scanTimeoutTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: nanoseconds)
             guard !Task.isCancelled else { return }
-            self?.handleScanTimeout()
+            self?.handleScanTimeout(for: scanID)
         }
     }
 
@@ -170,13 +211,13 @@ final class HomeViewModel: ObservableObject {
         scanTimeoutTask = nil
     }
 
-    @MainActor
-    private func handleScanTimeout() {
-        guard case .scanning = flowState else { return }
-        _ = container.scanner.stopScan()
-        isScanning = container.scanner.isScanning
-        flowState = .scannerUnavailable(message: Self.scanTimeoutMessage)
+    private func handleScanTimeout(for scanID: UUID) {
+        guard activeScanID == scanID, case .scanning = flowState else { return }
         cancelScanTimeout()
+        activeScanID = nil
+        _ = container.scanner.stopScan()
+        refreshScannerSnapshot()
+        setFlowState(.scannerUnavailable(message: Self.scanTimeoutMessage))
     }
 
     private func scannerErrorState(for state: BleScannerState) -> PaymentFlowState {
@@ -187,11 +228,11 @@ final class HomeViewModel: ObservableObject {
     }
 
     private func processAdvertisement(_ event: BleDiscoveredAdvertisement) {
-        guard case .scanning = flowState else { return }
+        guard activeScanID != nil, case .scanning = flowState else { return }
 
         guard let serviceData = event.volnaServiceData,
               let rawManufacturer = event.manufacturerData else {
-            latestParseRejection = "Missing Volna service/manufacturer data"
+            setLatestParseRejection("Missing Volna service/manufacturer data")
             return
         }
 
@@ -200,17 +241,45 @@ final class HomeViewModel: ObservableObject {
             let split = try container.scanResponseParser.splitRawManufacturerData(rawManufacturer)
             let scanResponse = try container.scanResponseParser.parse(manufacturerID: split.manufacturerID, payload: split.payload)
             guard let candidate = container.candidateAssembler.assemble(advertisement: event, parsedService: packet, parsedScanResponse: scanResponse) else {
-                latestParseRejection = "Candidate rejected by RSSI threshold"
+                setLatestParseRejection("Candidate rejected by RSSI threshold")
                 return
             }
-            latestParseRejection = nil
+            setLatestParseRejection(nil)
             latestValidCandidate = candidate
             cancelScanTimeout()
+            activeScanID = nil
             _ = container.scanner.stopScan()
-            isScanning = container.scanner.isScanning
-            flowState = .readyForConfirmation(candidate)
+            refreshScannerSnapshot()
+            setFlowState(.readyForConfirmation(candidate))
         } catch {
-            latestParseRejection = String(describing: error)
+            setLatestParseRejection(String(describing: error))
+        }
+    }
+
+    private func refreshScannerSnapshot() {
+        setScannerState(container.scanner.currentState)
+        setIsScanning(container.scanner.isScanning)
+    }
+
+    private func setFlowState(_ newValue: PaymentFlowState) {
+        flowState = newValue
+    }
+
+    private func setScannerState(_ newValue: BleScannerState) {
+        if scannerState != newValue {
+            scannerState = newValue
+        }
+    }
+
+    private func setIsScanning(_ newValue: Bool) {
+        if isScanning != newValue {
+            isScanning = newValue
+        }
+    }
+
+    private func setLatestParseRejection(_ newValue: String?) {
+        if latestParseRejection != newValue {
+            latestParseRejection = newValue
         }
     }
 

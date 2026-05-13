@@ -6,7 +6,10 @@ final class CoreBluetoothBleScanner: NSObject, BleScannerProtocol {
     var advertisementDidDiscover: ((BleDiscoveredAdvertisement) -> Void)?
 
     private(set) var currentState: BleScannerState = .idle {
-        didSet { stateDidChange?(currentState) }
+        didSet {
+            guard oldValue != currentState else { return }
+            stateDidChange?(currentState)
+        }
     }
     private(set) var isScanning = false
 
@@ -30,7 +33,7 @@ final class CoreBluetoothBleScanner: NSObject, BleScannerProtocol {
         guard !isScanning else { return .started }
 
         let services: [CBUUID]? = scanAllDevicesForDebug ? nil : [serviceUUID]
-        centralManager.scanForPeripherals(withServices: services, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+        centralManager.scanForPeripherals(withServices: services, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
         isScanning = true
         currentState = .scanning
         return .started
