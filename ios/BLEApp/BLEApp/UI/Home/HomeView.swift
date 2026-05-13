@@ -861,68 +861,93 @@ private struct AndroidErrorView: View {
     let isEnabled: Bool
 
     var body: some View {
-        ScrollView {
+        GeometryReader { proxy in
+            let isCompactHeight = proxy.size.height < 620
+            let iconSize = min(250, max(160, proxy.size.width - 56))
+
             VStack(spacing: 0) {
-                HStack {
-                    Spacer()
-                    Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 22, weight: .regular))
-                            .foregroundStyle(HomePalette.brandDarkGray)
-                            .frame(width: 44, height: 44)
+                closeRow
+
+                if isCompactHeight {
+                    ScrollView {
+                        centerContent(iconSize: iconSize)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(!isEnabled)
-                    .accessibilityLabel("На главный экран")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    Spacer(minLength: 0)
+                    centerContent(iconSize: iconSize)
+                    Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-
-                Spacer(minLength: 24)
-
-                Text(title)
-                    .font(.system(size: 24, weight: .black))
-                    .lineSpacing(8)
-                    .foregroundStyle(HomePalette.brandRed)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-
-                Spacer().frame(height: 32)
-
-                LottieView(
-                    animationName: "failed",
-                    loopMode: .playOnce,
-                    contentMode: .aspectFit,
-                    autoplay: true,
-                    fallback: {
-                        Circle()
-                            .stroke(HomePalette.brandRed, lineWidth: 12)
-                            .overlay(Text("!").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandRed))
-                    }
-                )
-                .frame(width: 250, height: 250)
-
-                Spacer().frame(height: 32)
-
-                Text(message)
-                    .font(.system(size: 14, weight: .regular))
-                    .lineSpacing(10)
-                    .foregroundStyle(HomePalette.brandBlack)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
-
-                Spacer(minLength: 24)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 22)
-            .padding(.bottom, 24)
+            .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .safeAreaInset(edge: .bottom) {
             BottomCTAContainer {
                 BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
             }
         }
+    }
+
+    private var closeRow: some View {
+        HStack {
+            Spacer()
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundStyle(HomePalette.brandDarkGray)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .disabled(!isEnabled)
+            .accessibilityLabel("На главный экран")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+    }
+
+    private func centerContent(iconSize: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            Text(title)
+                .font(.system(size: 24, weight: .black))
+                .lineSpacing(8)
+                .foregroundStyle(HomePalette.brandRed)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 28)
+
+            Spacer().frame(height: 32)
+
+            LottieView(
+                animationName: "failed",
+                loopMode: .playOnce,
+                contentMode: .aspectFit,
+                autoplay: true,
+                fallback: {
+                    Circle()
+                        .stroke(HomePalette.brandRed, lineWidth: 12)
+                        .overlay(Text("!").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandRed))
+                }
+            )
+            .frame(width: iconSize, height: iconSize)
+
+            Spacer().frame(height: 32)
+
+            Text(message)
+                .font(.system(size: 14, weight: .regular))
+                .lineSpacing(10)
+                .foregroundStyle(HomePalette.brandBlack)
+                .multilineTextAlignment(.center)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 28)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 24)
     }
 }
 
@@ -1116,6 +1141,8 @@ struct HomeScreenPresentation {
             return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .submittingPayment(sample), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
         case .success:
             return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .paymentSuccess(sample), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
+        case .timeoutError:
+            return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .scannerUnavailable(message: "Терминал не найден. Попробуйте повторить сканирование."), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
         case .error:
             return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .paymentError(sample, message: "Payment service unavailable"), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
         }
@@ -1132,6 +1159,7 @@ enum HomeDemoScenario: String, CaseIterable, Identifiable {
     case candidate
     case submitting
     case success
+    case timeoutError
     case error
 
     var id: String { rawValue }
@@ -1145,6 +1173,7 @@ enum HomeDemoScenario: String, CaseIterable, Identifiable {
         case .candidate: return "Candidate"
         case .submitting: return "Submitting"
         case .success: return "Success"
+        case .timeoutError: return "Timeout"
         case .error: return "Error"
         }
     }
