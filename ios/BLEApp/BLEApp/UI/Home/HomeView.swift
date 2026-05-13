@@ -127,14 +127,14 @@ struct HomeView: View {
             )
         case .scannerUnavailable(let message):
             ScannerUnavailableView(
-                message: scannerStatusMessage(fallback: message),
+                message: message,
                 onClose: handleCloseTap,
                 onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
             )
         case .blockingError(let message):
             BlockingErrorView(
-                message: scannerStatusMessage(fallback: message),
+                message: message,
                 onClose: handleCloseTap,
                 onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
@@ -189,14 +189,6 @@ struct HomeView: View {
         #endif
 
         return presentation.isLiveMode
-    }
-
-    private func scannerStatusMessage(fallback: String) -> String {
-        guard !presentation.scannerStatus.canStartScan else {
-            return fallback
-        }
-
-        return "\(presentation.scannerStatus.title)\n\(presentation.scannerStatus.message)"
     }
 
     private func handleStartScanTap() {

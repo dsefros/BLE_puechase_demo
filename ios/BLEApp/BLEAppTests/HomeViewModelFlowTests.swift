@@ -367,6 +367,16 @@ extension HomeViewModelFlowTests {
         }
     }
 
+
+    func testDemoPresentationTimeoutScenarioUsesExactScannerTimeoutMessage() {
+        let presentation = HomeScreenPresentation.demo(.timeoutError)
+
+        guard case .scannerUnavailable(let message) = presentation.flowState else {
+            return XCTFail("Expected timeout scenario to render scannerUnavailable")
+        }
+        XCTAssertEqual(message, "Терминал не найден. Попробуйте повторить сканирование.")
+    }
+
     func testDemoPresentationLiveMapsToInteractiveDefaults() {
         let presentation = HomeScreenPresentation.demo(.live)
         XCTAssertTrue(presentation.isLiveMode)
