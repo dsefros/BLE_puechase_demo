@@ -34,23 +34,34 @@ final class HomeViewModel: ObservableObject {
 
     private let container: AppContainer
     private let maxEvents = 20
+    private static let scanTimeoutMessage = "Терминал не найден. Попробуйте повторить сканирование."
+    private static let bluetoothPermissionMessage = "Нет разрешения на Bluetooth. Разрешите доступ к Bluetooth в настройках приложения и повторите сканирование."
 
-    init(container: AppContainer) {
+    private let scanTimeoutSeconds: TimeInterval
+    private var scanTimeoutTask: Task<Void, Never>?
+
+    init(container: AppContainer, scanTimeoutSeconds: TimeInterval = TimeInterval(BleConfig.scanTimeoutSeconds)) {
         self.container = container
+        self.scanTimeoutSeconds = scanTimeoutSeconds
         scannerState = container.scanner.currentState
         isScanning = container.scanner.isScanning
 
         container.scanner.stateDidChange = { [weak self] state in
-            guard let self else { return }
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 self.scannerState = state
                 self.isScanning = self.container.scanner.isScanning
+
+                if case .scanning = self.flowState, !self.isScanning, !self.scannerStatusPresenter.status(for: state, isScanning: false).canStartScan {
+                    self.cancelScanTimeout()
+                    self.flowState = self.scannerErrorState(for: state)
+                }
             }
         }
 
         container.scanner.advertisementDidDiscover = { [weak self] event in
-            guard let self else { return }
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 self.discoveredAdvertisements.removeAll { $0.peripheralID == event.peripheralID }
                 self.discoveredAdvertisements.insert(event, at: 0)
                 self.discoveredAdvertisements = Array(self.discoveredAdvertisements.prefix(self.maxEvents))
@@ -60,26 +71,27 @@ final class HomeViewModel: ObservableObject {
     }
 
     func startScan() {
+        cancelScanTimeout()
+        latestValidCandidate = nil
+
         let result = container.scanner.startScan()
         isScanning = container.scanner.isScanning
 
         switch result {
         case .started:
             flowState = .scanning
+            scheduleScanTimeout()
         case .stopped:
             flowState = .idle
         case .unavailable(let state):
-            if state == .unauthorized {
-                flowState = .blockingError(message: "Bluetooth permission is required to scan for payment terminals.")
-            } else {
-                flowState = .scannerUnavailable(message: scannerStatusPresenter.status(for: state, isScanning: false).title)
-            }
+            flowState = scannerErrorState(for: state)
         }
 
         container.logger.log("Start scan result: \(result)")
     }
 
     func stopScan() {
+        cancelScanTimeout()
         let result = container.scanner.stopScan()
         isScanning = container.scanner.isScanning
         if !isScanning, case .scanning = flowState {
@@ -88,7 +100,30 @@ final class HomeViewModel: ObservableObject {
         container.logger.log("Stop scan result: \(result)")
     }
 
+    func retryCurrentError() {
+        switch flowState {
+        case .scannerUnavailable, .blockingError:
+            startScan()
+        case .paymentError:
+            // MVP retry semantics: restart BLE discovery rather than resubmitting a potentially stale payment.
+            returnToIdle()
+            startScan()
+        default:
+            break
+        }
+    }
+
+    func closeCurrentError() {
+        switch flowState {
+        case .scannerUnavailable, .blockingError, .paymentError:
+            returnToIdle()
+        default:
+            break
+        }
+    }
+
     func confirmPayment() async {
+        cancelScanTimeout()
         guard case let .readyForConfirmation(candidate) = flowState else { return }
         flowState = .submittingPayment(candidate)
         let submission = await container.paymentSubmissionService.submit(candidate: candidate)
@@ -101,15 +136,59 @@ final class HomeViewModel: ObservableObject {
     }
 
     func cancelConfirmation() {
+        cancelScanTimeout()
         latestValidCandidate = nil
         if isScanning {
             flowState = .scanning
+            scheduleScanTimeout()
         } else {
             flowState = .idle
         }
     }
 
+    private func returnToIdle() {
+        cancelScanTimeout()
+        _ = container.scanner.stopScan()
+        isScanning = container.scanner.isScanning
+        latestValidCandidate = nil
+        flowState = .idle
+    }
+
+    private func scheduleScanTimeout() {
+        guard scanTimeoutSeconds > 0 else { return }
+        scanTimeoutTask?.cancel()
+        let nanoseconds = UInt64(scanTimeoutSeconds * 1_000_000_000)
+        scanTimeoutTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: nanoseconds)
+            guard !Task.isCancelled else { return }
+            self?.handleScanTimeout()
+        }
+    }
+
+    private func cancelScanTimeout() {
+        scanTimeoutTask?.cancel()
+        scanTimeoutTask = nil
+    }
+
+    @MainActor
+    private func handleScanTimeout() {
+        guard case .scanning = flowState else { return }
+        _ = container.scanner.stopScan()
+        isScanning = container.scanner.isScanning
+        flowState = .scannerUnavailable(message: Self.scanTimeoutMessage)
+        cancelScanTimeout()
+    }
+
+    private func scannerErrorState(for state: BleScannerState) -> PaymentFlowState {
+        if state == .unauthorized {
+            return .blockingError(message: Self.bluetoothPermissionMessage)
+        }
+        return .scannerUnavailable(message: scannerStatusPresenter.status(for: state, isScanning: false).title)
+    }
+
     private func processAdvertisement(_ event: BleDiscoveredAdvertisement) {
+        guard case .scanning = flowState else { return }
+
         guard let serviceData = event.volnaServiceData,
               let rawManufacturer = event.manufacturerData else {
             latestParseRejection = "Missing Volna service/manufacturer data"
@@ -126,11 +205,16 @@ final class HomeViewModel: ObservableObject {
             }
             latestParseRejection = nil
             latestValidCandidate = candidate
+            cancelScanTimeout()
             _ = container.scanner.stopScan()
             isScanning = container.scanner.isScanning
             flowState = .readyForConfirmation(candidate)
         } catch {
             latestParseRejection = String(describing: error)
         }
+    }
+
+    deinit {
+        scanTimeoutTask?.cancel()
     }
 }

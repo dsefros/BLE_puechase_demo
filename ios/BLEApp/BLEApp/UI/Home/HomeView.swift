@@ -121,19 +121,22 @@ struct HomeView: View {
                 candidate: candidate,
                 message: message,
                 formatAmount: formatAmount,
+                onClose: handleCloseTap,
                 onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
             )
         case .scannerUnavailable(let message):
             ScannerUnavailableView(
                 message: scannerStatusMessage(fallback: message),
-                onBack: handleRetryTap,
+                onClose: handleCloseTap,
+                onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
             )
         case .blockingError(let message):
             BlockingErrorView(
                 message: scannerStatusMessage(fallback: message),
-                onBack: handleRetryTap,
+                onClose: handleCloseTap,
+                onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
             )
         }
@@ -256,7 +259,18 @@ struct HomeView: View {
         }
         #endif
 
-        cancelConfirmationIfLive()
+        retryCurrentErrorIfLive()
+    }
+
+    private func handleCloseTap() {
+        #if DEBUG
+        if demoScenario != .live {
+            demoScenario = .ready
+            return
+        }
+        #endif
+
+        closeCurrentErrorIfLive()
     }
 
     private func confirmPaymentIfLive() {
@@ -267,6 +281,16 @@ struct HomeView: View {
     private func cancelConfirmationIfLive() {
         guard presentation.isLiveMode else { return }
         viewModel.cancelConfirmation()
+    }
+
+    private func retryCurrentErrorIfLive() {
+        guard presentation.isLiveMode else { return }
+        viewModel.retryCurrentError()
+    }
+
+    private func closeCurrentErrorIfLive() {
+        guard presentation.isLiveMode else { return }
+        viewModel.closeCurrentError()
     }
 
     private func startScanIfLive() {
@@ -500,8 +524,22 @@ private struct BluePrimaryButton: View {
                 .clipShape(Capsule())
         }
         .disabled(!isEnabled)
-        .padding(.horizontal, 28)
-        .padding(.bottom, 18)
+    }
+}
+
+private struct BottomCTAContainer<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .padding(.horizontal, 28)
+            .padding(.top, 8)
+            .padding(.bottom, 18)
+            .background(Color.clear)
     }
 }
 
@@ -533,17 +571,19 @@ private struct ScanningStateView: View {
     let isEnabled: Bool
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            AndroidCenterLayout(
-                title: "Пожалуйста, подождите",
-                status: "Сканирование...",
-                titleMaxLines: 1,
-                visualTopSpacing: 16,
-                statusTopSpacing: 32,
-                visual: { ScanningLoaderView() }
-            )
-
-            BluePrimaryButton(title: "Отмена", action: onCancel, isEnabled: isEnabled)
+        AndroidCenterLayout(
+            title: "Пожалуйста, подождите",
+            status: "Сканирование...",
+            titleMaxLines: 1,
+            visualTopSpacing: 16,
+            statusTopSpacing: 32,
+            visual: { ScanningLoaderView() }
+        )
+        .padding(.bottom, 24)
+        .safeAreaInset(edge: .bottom) {
+            BottomCTAContainer {
+                BluePrimaryButton(title: "Отмена", action: onCancel, isEnabled: isEnabled)
+            }
         }
     }
 }
@@ -587,7 +627,7 @@ private struct CandidateConfirmationView: View {
     let isEnabled: Bool
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ScrollView {
             VStack(spacing: 0) {
                 HStack(spacing: 16) {
                     Button(action: onCancel) {
@@ -636,12 +676,15 @@ private struct CandidateConfirmationView: View {
                 .shadow(color: Color.black.opacity(0.18), radius: 12, x: 0, y: 8)
                 .padding(.bottom, 16)
 
-                Spacer(minLength: 0)
+                Spacer(minLength: 24)
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 18)
-
-            BluePrimaryButton(title: "Оплатить \(formatAmount(candidate.amountMinor))", action: onConfirm, isEnabled: isEnabled)
+        }
+        .safeAreaInset(edge: .bottom) {
+            BottomCTAContainer {
+                BluePrimaryButton(title: "Оплатить \(formatAmount(candidate.amountMinor))", action: onConfirm, isEnabled: isEnabled)
+            }
         }
     }
 }
@@ -772,6 +815,7 @@ private struct PaymentErrorView: View {
     let candidate: PaymentCandidate
     let message: String
     let formatAmount: (UInt32) -> String
+    let onClose: () -> Void
     let onRetry: () -> Void
     let isEnabled: Bool
 
@@ -779,7 +823,7 @@ private struct PaymentErrorView: View {
         AndroidErrorView(
             title: "Ошибка оплаты",
             message: message,
-            onBack: onRetry,
+            onClose: onClose,
             onRetry: onRetry,
             isEnabled: isEnabled
         )
@@ -789,37 +833,39 @@ private struct PaymentErrorView: View {
 
 private struct ScannerUnavailableView: View {
     let message: String
-    let onBack: () -> Void
+    let onClose: () -> Void
+    let onRetry: () -> Void
     let isEnabled: Bool
 
     var body: some View {
-        AndroidErrorView(title: "Ошибка", message: message, onBack: onBack, onRetry: onBack, isEnabled: isEnabled)
+        AndroidErrorView(title: "Ошибка", message: message, onClose: onClose, onRetry: onRetry, isEnabled: isEnabled)
     }
 }
 
 private struct BlockingErrorView: View {
     let message: String
-    let onBack: () -> Void
+    let onClose: () -> Void
+    let onRetry: () -> Void
     let isEnabled: Bool
 
     var body: some View {
-        AndroidErrorView(title: "Ошибка", message: message, onBack: onBack, onRetry: onBack, isEnabled: isEnabled)
+        AndroidErrorView(title: "Ошибка", message: message, onClose: onClose, onRetry: onRetry, isEnabled: isEnabled)
     }
 }
 
 private struct AndroidErrorView: View {
     let title: String
     let message: String
-    let onBack: () -> Void
+    let onClose: () -> Void
     let onRetry: () -> Void
     let isEnabled: Bool
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ScrollView {
             VStack(spacing: 0) {
                 HStack {
                     Spacer()
-                    Button(action: onBack) {
+                    Button(action: onClose) {
                         Image(systemName: "xmark")
                             .font(.system(size: 22, weight: .regular))
                             .foregroundStyle(HomePalette.brandDarkGray)
@@ -870,8 +916,12 @@ private struct AndroidErrorView: View {
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 22)
-
-            BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
+            .padding(.bottom, 24)
+        }
+        .safeAreaInset(edge: .bottom) {
+            BottomCTAContainer {
+                BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
+            }
         }
     }
 }

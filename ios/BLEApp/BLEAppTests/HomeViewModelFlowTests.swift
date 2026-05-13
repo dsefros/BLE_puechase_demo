@@ -111,6 +111,142 @@ final class HomeViewModelFlowTests: XCTestCase {
         XCTAssertFalse(sut.canStartScanAction)
         XCTAssertTrue(sut.canStopScanAction)
     }
+
+    func testScanTimeoutMovesFromScanningToRetryableScannerError() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner), scanTimeoutSeconds: 0.01)
+
+        sut.startScan()
+        await sleep(milliseconds: 30)
+
+        guard case .scannerUnavailable(let message) = sut.flowState else {
+            return XCTFail("Expected scannerUnavailable after timeout")
+        }
+        XCTAssertEqual(message, "Терминал не найден. Попробуйте повторить сканирование.")
+        XCTAssertFalse(sut.isScanning)
+        XCTAssertEqual(scanner.stopScanCallCount, 1)
+    }
+
+    func testScanTimeoutFinalStateStaysRetryableErrorAfterStopScanStateCallback() async {
+        let scanner = FakeBleScanner()
+        scanner.stateToEmitOnStop = .poweredOff
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner), scanTimeoutSeconds: 0.01)
+
+        sut.startScan()
+        await sleep(milliseconds: 30)
+        await Task.yield()
+        await Task.yield()
+
+        guard case .scannerUnavailable(let message) = sut.flowState else {
+            return XCTFail("Expected timeout scannerUnavailable to remain visible")
+        }
+        XCTAssertEqual(message, "Терминал не найден. Попробуйте повторить сканирование.")
+        XCTAssertFalse(sut.isScanning)
+    }
+
+    func testUnauthorizedBluetoothUsesRussianBlockingErrorMessage() async {
+        let scanner = FakeBleScanner()
+        scanner.currentState = .unauthorized
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner))
+
+        sut.startScan()
+
+        guard case .blockingError(let message) = sut.flowState else {
+            return XCTFail("Expected blockingError for unauthorized Bluetooth")
+        }
+        XCTAssertEqual(message, "Нет разрешения на Bluetooth. Разрешите доступ к Bluetooth в настройках приложения и повторите сканирование.")
+    }
+
+    func testCancelScanCancelsTimeoutAndReturnsIdle() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner), scanTimeoutSeconds: 0.01)
+
+        sut.startScan()
+        sut.stopScan()
+        await sleep(milliseconds: 30)
+
+        XCTAssertEqual(sut.flowState, .idle)
+        XCTAssertFalse(sut.isScanning)
+    }
+
+    func testValidCandidateBeforeTimeoutCancelsTimeoutAndShowsReadyForConfirmation() async {
+        let scanner = FakeBleScanner()
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner), scanTimeoutSeconds: 0.02)
+
+        sut.startScan()
+        await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -55))
+        await sleep(milliseconds: 40)
+
+        guard case .readyForConfirmation(let candidate) = sut.flowState else {
+            return XCTFail("Expected readyForConfirmation to survive past timeout")
+        }
+        XCTAssertEqual(candidate.merchant, "Тест")
+        XCTAssertFalse(sut.isScanning)
+    }
+
+    func testRetryFromScannerUnavailableAndBlockingErrorAttemptsScanningAgain() async {
+        let scanner = FakeBleScanner()
+        scanner.currentState = .poweredOff
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner), scanTimeoutSeconds: 10)
+
+        sut.startScan()
+        XCTAssertEqual(scanner.startScanCallCount, 1)
+        guard case .scannerUnavailable = sut.flowState else {
+            return XCTFail("Expected scannerUnavailable")
+        }
+
+        scanner.currentState = .ready
+        sut.retryCurrentError()
+        XCTAssertEqual(scanner.startScanCallCount, 2)
+        XCTAssertEqual(sut.flowState, .scanning)
+
+        sut.stopScan()
+        scanner.currentState = .unauthorized
+        sut.startScan()
+        XCTAssertEqual(scanner.startScanCallCount, 3)
+        guard case .blockingError = sut.flowState else {
+            return XCTFail("Expected blockingError")
+        }
+
+        scanner.currentState = .ready
+        sut.retryCurrentError()
+        XCTAssertEqual(scanner.startScanCallCount, 4)
+        XCTAssertEqual(sut.flowState, .scanning)
+    }
+
+    func testCloseFromScannerErrorReturnsIdleWithoutRetryingScan() async {
+        let scanner = FakeBleScanner()
+        scanner.currentState = .poweredOff
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner))
+
+        sut.startScan()
+        XCTAssertEqual(scanner.startScanCallCount, 1)
+        sut.closeCurrentError()
+
+        XCTAssertEqual(sut.flowState, .idle)
+        XCTAssertEqual(scanner.startScanCallCount, 1)
+        XCTAssertFalse(sut.isScanning)
+    }
+
+    func testRetryFromPaymentErrorRestartsBleScanForMVPInsteadOfResubmittingPayment() async {
+        let scanner = FakeBleScanner()
+        let paymentService = FakePaymentSubmissionService(result: .failure(message: "Failed"))
+        let sut = HomeViewModel(container: AppContainer(scanner: scanner, paymentSubmissionService: paymentService))
+
+        sut.startScan()
+        await emitAndDrainMainActor(scanner: scanner, advertisement: makeAdvertisement(rssi: -55))
+        await sut.confirmPayment()
+        guard case .paymentError = sut.flowState else {
+            return XCTFail("Expected paymentError")
+        }
+
+        sut.retryCurrentError()
+
+        XCTAssertEqual(sut.flowState, .scanning)
+        XCTAssertEqual(scanner.startScanCallCount, 2)
+        XCTAssertNil(sut.latestValidCandidate)
+    }
+
     func testCancelReturnsToIdleWhenNotScanning() async {
         let scanner = FakeBleScanner()
         let sut = HomeViewModel(container: AppContainer(scanner: scanner))
@@ -140,6 +276,10 @@ final class HomeViewModelFlowTests: XCTestCase {
         await Task.yield()
     }
 
+    private func sleep(milliseconds: UInt64) async {
+        try? await Task.sleep(nanoseconds: milliseconds * 1_000_000)
+    }
+
     private func makeAdvertisement(rssi: Int) -> BleDiscoveredAdvertisement {
         let serviceData = Data([0x20, 0x80, 0x01, 0x01])
         let merchantPayload = "Тест".data(using: .windowsCP1251)!
@@ -164,8 +304,16 @@ private final class FakeBleScanner: BleScannerProtocol {
 
     var currentState: BleScannerState = .ready
     var isScanning = false
+    var stateToEmitOnStop: BleScannerState = .ready
+    private(set) var startScanCallCount = 0
+    private(set) var stopScanCallCount = 0
 
     func startScan() -> BleScanResult {
+        startScanCallCount += 1
+        guard currentState == .ready || currentState == .scanning else {
+            return .unavailable(currentState)
+        }
+
         isScanning = true
         currentState = .scanning
         stateDidChange?(.scanning)
@@ -173,9 +321,10 @@ private final class FakeBleScanner: BleScannerProtocol {
     }
 
     func stopScan() -> BleScanResult {
+        stopScanCallCount += 1
         isScanning = false
-        currentState = .ready
-        stateDidChange?(.ready)
+        currentState = stateToEmitOnStop
+        stateDidChange?(stateToEmitOnStop)
         return .stopped
     }
 
