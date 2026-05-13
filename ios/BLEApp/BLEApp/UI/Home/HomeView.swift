@@ -121,19 +121,22 @@ struct HomeView: View {
                 candidate: candidate,
                 message: message,
                 formatAmount: formatAmount,
+                onClose: handleCloseTap,
                 onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
             )
         case .scannerUnavailable(let message):
             ScannerUnavailableView(
-                message: scannerStatusMessage(fallback: message),
-                onBack: handleRetryTap,
+                message: message,
+                onClose: handleCloseTap,
+                onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
             )
         case .blockingError(let message):
             BlockingErrorView(
-                message: scannerStatusMessage(fallback: message),
-                onBack: handleRetryTap,
+                message: message,
+                onClose: handleCloseTap,
+                onRetry: handleRetryTap,
                 isEnabled: canInteractWithCurrentPresentation
             )
         }
@@ -186,14 +189,6 @@ struct HomeView: View {
         #endif
 
         return presentation.isLiveMode
-    }
-
-    private func scannerStatusMessage(fallback: String) -> String {
-        guard !presentation.scannerStatus.canStartScan else {
-            return fallback
-        }
-
-        return "\(presentation.scannerStatus.title)\n\(presentation.scannerStatus.message)"
     }
 
     private func handleStartScanTap() {
@@ -256,7 +251,18 @@ struct HomeView: View {
         }
         #endif
 
-        cancelConfirmationIfLive()
+        retryCurrentErrorIfLive()
+    }
+
+    private func handleCloseTap() {
+        #if DEBUG
+        if demoScenario != .live {
+            demoScenario = .ready
+            return
+        }
+        #endif
+
+        closeCurrentErrorIfLive()
     }
 
     private func confirmPaymentIfLive() {
@@ -267,6 +273,16 @@ struct HomeView: View {
     private func cancelConfirmationIfLive() {
         guard presentation.isLiveMode else { return }
         viewModel.cancelConfirmation()
+    }
+
+    private func retryCurrentErrorIfLive() {
+        guard presentation.isLiveMode else { return }
+        viewModel.retryCurrentError()
+    }
+
+    private func closeCurrentErrorIfLive() {
+        guard presentation.isLiveMode else { return }
+        viewModel.closeCurrentError()
     }
 
     private func startScanIfLive() {
@@ -500,8 +516,22 @@ private struct BluePrimaryButton: View {
                 .clipShape(Capsule())
         }
         .disabled(!isEnabled)
-        .padding(.horizontal, 28)
-        .padding(.bottom, 18)
+    }
+}
+
+private struct BottomCTAContainer<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .padding(.horizontal, 28)
+            .padding(.top, 8)
+            .padding(.bottom, 18)
+            .background(Color.clear)
     }
 }
 
@@ -533,17 +563,19 @@ private struct ScanningStateView: View {
     let isEnabled: Bool
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            AndroidCenterLayout(
-                title: "Пожалуйста, подождите",
-                status: "Сканирование...",
-                titleMaxLines: 1,
-                visualTopSpacing: 16,
-                statusTopSpacing: 32,
-                visual: { ScanningLoaderView() }
-            )
-
-            BluePrimaryButton(title: "Отмена", action: onCancel, isEnabled: isEnabled)
+        AndroidCenterLayout(
+            title: "Пожалуйста, подождите",
+            status: "Сканирование...",
+            titleMaxLines: 1,
+            visualTopSpacing: 16,
+            statusTopSpacing: 32,
+            visual: { ScanningLoaderView() }
+        )
+        .padding(.bottom, 24)
+        .safeAreaInset(edge: .bottom) {
+            BottomCTAContainer {
+                BluePrimaryButton(title: "Отмена", action: onCancel, isEnabled: isEnabled)
+            }
         }
     }
 }
@@ -587,7 +619,7 @@ private struct CandidateConfirmationView: View {
     let isEnabled: Bool
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ScrollView {
             VStack(spacing: 0) {
                 HStack(spacing: 16) {
                     Button(action: onCancel) {
@@ -636,12 +668,15 @@ private struct CandidateConfirmationView: View {
                 .shadow(color: Color.black.opacity(0.18), radius: 12, x: 0, y: 8)
                 .padding(.bottom, 16)
 
-                Spacer(minLength: 0)
+                Spacer(minLength: 24)
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 18)
-
-            BluePrimaryButton(title: "Оплатить \(formatAmount(candidate.amountMinor))", action: onConfirm, isEnabled: isEnabled)
+        }
+        .safeAreaInset(edge: .bottom) {
+            BottomCTAContainer {
+                BluePrimaryButton(title: "Оплатить \(formatAmount(candidate.amountMinor))", action: onConfirm, isEnabled: isEnabled)
+            }
         }
     }
 }
@@ -772,6 +807,7 @@ private struct PaymentErrorView: View {
     let candidate: PaymentCandidate
     let message: String
     let formatAmount: (UInt32) -> String
+    let onClose: () -> Void
     let onRetry: () -> Void
     let isEnabled: Bool
 
@@ -779,7 +815,7 @@ private struct PaymentErrorView: View {
         AndroidErrorView(
             title: "Ошибка оплаты",
             message: message,
-            onBack: onRetry,
+            onClose: onClose,
             onRetry: onRetry,
             isEnabled: isEnabled
         )
@@ -789,90 +825,121 @@ private struct PaymentErrorView: View {
 
 private struct ScannerUnavailableView: View {
     let message: String
-    let onBack: () -> Void
+    let onClose: () -> Void
+    let onRetry: () -> Void
     let isEnabled: Bool
 
     var body: some View {
-        AndroidErrorView(title: "Ошибка", message: message, onBack: onBack, onRetry: onBack, isEnabled: isEnabled)
+        AndroidErrorView(title: "Ошибка", message: message, onClose: onClose, onRetry: onRetry, isEnabled: isEnabled)
     }
 }
 
 private struct BlockingErrorView: View {
     let message: String
-    let onBack: () -> Void
+    let onClose: () -> Void
+    let onRetry: () -> Void
     let isEnabled: Bool
 
     var body: some View {
-        AndroidErrorView(title: "Ошибка", message: message, onBack: onBack, onRetry: onBack, isEnabled: isEnabled)
+        AndroidErrorView(title: "Ошибка", message: message, onClose: onClose, onRetry: onRetry, isEnabled: isEnabled)
     }
 }
 
 private struct AndroidErrorView: View {
     let title: String
     let message: String
-    let onBack: () -> Void
+    let onClose: () -> Void
     let onRetry: () -> Void
     let isEnabled: Bool
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        GeometryReader { proxy in
+            let isCompactHeight = proxy.size.height < 620
+            let iconSize = min(250, max(160, proxy.size.width - 56))
+
             VStack(spacing: 0) {
-                HStack {
-                    Spacer()
-                    Button(action: onBack) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 22, weight: .regular))
-                            .foregroundStyle(HomePalette.brandDarkGray)
-                            .frame(width: 44, height: 44)
+                closeRow
+
+                if isCompactHeight {
+                    ScrollView {
+                        centerContent(iconSize: iconSize)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(!isEnabled)
-                    .accessibilityLabel("На главный экран")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    Spacer(minLength: 0)
+                    centerContent(iconSize: iconSize)
+                    Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-
-                Spacer(minLength: 24)
-
-                Text(title)
-                    .font(.system(size: 24, weight: .black))
-                    .lineSpacing(8)
-                    .foregroundStyle(HomePalette.brandRed)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-
-                Spacer().frame(height: 32)
-
-                LottieView(
-                    animationName: "failed",
-                    loopMode: .playOnce,
-                    contentMode: .aspectFit,
-                    autoplay: true,
-                    fallback: {
-                        Circle()
-                            .stroke(HomePalette.brandRed, lineWidth: 12)
-                            .overlay(Text("!").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandRed))
-                    }
-                )
-                .frame(width: 250, height: 250)
-
-                Spacer().frame(height: 32)
-
-                Text(message)
-                    .font(.system(size: 14, weight: .regular))
-                    .lineSpacing(10)
-                    .foregroundStyle(HomePalette.brandBlack)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
-
-                Spacer(minLength: 24)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 22)
-
-            BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
+            .frame(width: proxy.size.width, height: proxy.size.height)
         }
+        .safeAreaInset(edge: .bottom) {
+            BottomCTAContainer {
+                BluePrimaryButton(title: "Повторить", action: onRetry, isEnabled: isEnabled)
+            }
+        }
+    }
+
+    private var closeRow: some View {
+        HStack {
+            Spacer()
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundStyle(HomePalette.brandDarkGray)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .disabled(!isEnabled)
+            .accessibilityLabel("На главный экран")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+    }
+
+    private func centerContent(iconSize: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            Text(title)
+                .font(.system(size: 24, weight: .black))
+                .lineSpacing(8)
+                .foregroundStyle(HomePalette.brandRed)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 28)
+
+            Spacer().frame(height: 32)
+
+            LottieView(
+                animationName: "failed",
+                loopMode: .playOnce,
+                contentMode: .aspectFit,
+                autoplay: true,
+                fallback: {
+                    Circle()
+                        .stroke(HomePalette.brandRed, lineWidth: 12)
+                        .overlay(Text("!").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandRed))
+                }
+            )
+            .frame(width: iconSize, height: iconSize)
+
+            Spacer().frame(height: 32)
+
+            Text(message)
+                .font(.system(size: 14, weight: .regular))
+                .lineSpacing(10)
+                .foregroundStyle(HomePalette.brandBlack)
+                .multilineTextAlignment(.center)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 28)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 24)
     }
 }
 
@@ -1066,6 +1133,8 @@ struct HomeScreenPresentation {
             return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .submittingPayment(sample), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
         case .success:
             return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .paymentSuccess(sample), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
+        case .timeoutError:
+            return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .scannerUnavailable(message: "Терминал не найден. Попробуйте повторить сканирование."), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
         case .error:
             return Self(scannerStatus: statusPresenter.status(for: .ready, isScanning: false), flowState: .paymentError(sample, message: "Payment service unavailable"), isScanning: false, scannerState: .ready, diagnostics: [HomeDemoScenario.sampleAdvertisement], latestParseRejection: nil, canShowScanButtons: false, canStartScanAction: false, canStopScanAction: false, isLiveMode: false)
         }
@@ -1082,6 +1151,7 @@ enum HomeDemoScenario: String, CaseIterable, Identifiable {
     case candidate
     case submitting
     case success
+    case timeoutError
     case error
 
     var id: String { rawValue }
@@ -1095,6 +1165,7 @@ enum HomeDemoScenario: String, CaseIterable, Identifiable {
         case .candidate: return "Candidate"
         case .submitting: return "Submitting"
         case .success: return "Success"
+        case .timeoutError: return "Timeout"
         case .error: return "Error"
         }
     }
