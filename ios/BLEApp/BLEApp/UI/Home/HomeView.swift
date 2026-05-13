@@ -48,9 +48,12 @@ struct HomeView: View {
 
     @ViewBuilder
     private var backgroundView: some View {
-        if presentation.flowState == .idle {
+        switch presentation.flowState {
+        case .idle:
             AndroidParityBackground()
-        } else {
+        case .scanning, .paymentError, .scannerUnavailable, .blockingError:
+            AndroidParityFlowBackground()
+        default:
             StaticFlowBackground()
         }
     }
@@ -335,6 +338,19 @@ private struct AndroidParityBackground: View {
     }
 }
 
+private struct AndroidParityFlowBackground: View {
+    var body: some View {
+        LottieView(
+            animationName: "background",
+            loopMode: .loop,
+            contentMode: .aspectFill,
+            autoplay: true,
+            fallback: { PaleWaveBackground() }
+        )
+        .overlay(HomePalette.overlay)
+    }
+}
+
 private struct StaticFlowBackground: View {
     var body: some View {
         PaleWaveBackground()
@@ -526,9 +542,11 @@ private struct BottomCTAContainer<Content: View>: View {
 
     var body: some View {
         content
-            .padding(.horizontal, 28)
+            .frame(maxWidth: 430)
+            .padding(.horizontal, 32)
             .padding(.top, 8)
             .padding(.bottom, 18)
+            .frame(maxWidth: .infinity)
             .background(Color.clear)
     }
 }
@@ -574,13 +592,14 @@ private struct ScanningStateView: View {
                     .padding(.horizontal, 28)
 
                 ScanningLoaderView()
-                    .padding(.top, 16)
+                    .padding(.top, 12)
 
                 Text("Сканирование...")
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(HomePalette.brandOrange)
+                    .tracking(0.8)
+                    .foregroundStyle(HomePalette.brandBlack)
                     .multilineTextAlignment(.center)
-                    .padding(.top, 32)
+                    .padding(.top, 24)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 
@@ -609,7 +628,7 @@ private struct ScanningLoaderView: View {
             autoplay: true,
             fallback: { DotsLoaderFallback() }
         )
-        .frame(width: 220, height: 220)
+        .frame(width: 200, height: 200)
         .allowsHitTesting(false)
     }
 }
@@ -618,9 +637,9 @@ private struct DotsLoaderFallback: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.25)) { timeline in
             let elapsed = timeline.date.timeIntervalSinceReferenceDate
-            let activeDot = Int((elapsed / 0.35).truncatingRemainder(dividingBy: 3))
+            let activeDot = Int((elapsed / 0.28).truncatingRemainder(dividingBy: 5))
             HStack(spacing: 10) {
-                ForEach(0..<3, id: \.self) { index in
+                ForEach(0..<5, id: \.self) { index in
                     Circle()
                         .fill(HomePalette.brandOrange.opacity(activeDot == index ? 1.0 : 0.30))
                         .frame(width: activeDot == index ? 14 : 11, height: activeDot == index ? 14 : 11)
@@ -909,8 +928,8 @@ private struct ErrorContent: View {
 
     var body: some View {
         ViewThatFits(in: .vertical) {
-            content(iconSize: 220, verticalSpacing: 32)
-            content(iconSize: 160, verticalSpacing: 18)
+            content(iconSize: 150, verticalSpacing: 28)
+            content(iconSize: 128, verticalSpacing: 18)
         }
     }
 
@@ -926,19 +945,9 @@ private struct ErrorContent: View {
 
             Spacer().frame(height: verticalSpacing)
 
-            LottieView(
-                animationName: "failed",
-                loopMode: .playOnce,
-                contentMode: .aspectFit,
-                autoplay: true,
-                fallback: {
-                    Circle()
-                        .stroke(HomePalette.brandRed, lineWidth: 12)
-                        .overlay(Text("!").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandRed))
-                }
-            )
-            .frame(width: iconSize, height: iconSize)
-            .allowsHitTesting(false)
+            FailedXIcon()
+                .frame(width: iconSize, height: iconSize)
+                .allowsHitTesting(false)
 
             Spacer().frame(height: verticalSpacing)
 
@@ -951,6 +960,21 @@ private struct ErrorContent: View {
                 .minimumScaleFactor(0.78)
                 .frame(maxWidth: .infinity)
         }
+    }
+}
+
+private struct FailedXIcon: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(HomePalette.brandRed)
+
+            Image(systemName: "xmark")
+                .font(.system(size: 52, weight: .heavy, design: .rounded))
+                .foregroundStyle(HomePalette.white)
+                .accessibilityHidden(true)
+        }
+        .accessibilityLabel("Ошибка")
     }
 }
 
