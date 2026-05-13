@@ -452,6 +452,9 @@ private struct BluetoothHeroIcon: View {
 private struct BluetoothHeroScanButton: View {
     let action: () -> Void
 
+    private let containerSize: CGFloat = 320
+    private let tapSize: CGFloat = 120
+
     var body: some View {
         ZStack {
             LottieView(
@@ -461,22 +464,23 @@ private struct BluetoothHeroScanButton: View {
                 autoplay: true,
                 fallback: { BluetoothHeroIcon() }
             )
-            .frame(width: 380, height: 380)
+            .frame(width: containerSize, height: containerSize)
+            .scaleEffect(0.25)
             .allowsHitTesting(false)
 
             Button(action: action) {
                 Circle()
                     .fill(Color.clear)
-                    .frame(width: 150, height: 150)
+                    .frame(width: tapSize, height: tapSize)
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .frame(width: 150, height: 150)
+            .frame(width: tapSize, height: tapSize)
             .contentShape(Circle())
             .accessibilityLabel("Начать сканирование")
             .accessibilityHint("Нажмите на кнопку для начала сканирования")
         }
-        .frame(width: 380, height: 380)
+        .frame(width: containerSize, height: containerSize)
     }
 }
 
@@ -518,7 +522,7 @@ private struct IdleWelcomeView: View {
             title: "Добро пожаловать!",
             subtitle: "Это приложение для оплаты QR-кодов\nпо технологии Bluetooth Low Energy",
             bottomHint: hintText,
-            visualTopSpacing: 8,
+            visualTopSpacing: 48,
             visual: { BluetoothHeroScanButton(action: onStartScan) }
         )
     }
