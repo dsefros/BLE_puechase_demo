@@ -21,13 +21,20 @@ struct HomeView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea()
+        foregroundContent
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                Color(.systemBackground)
+                    .ignoresSafeArea()
 
-            backgroundView
-                .ignoresSafeArea()
+                AndroidParityBackground()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
+    }
 
+    private var foregroundContent: some View {
+        Group {
             #if DEBUG
             if showSettings {
                 AndroidParitySettingsView(
@@ -43,15 +50,6 @@ struct HomeView: View {
             #else
             appContent
             #endif
-        }
-    }
-
-    @ViewBuilder
-    private var backgroundView: some View {
-        if presentation.flowState == .idle {
-            AndroidParityBackground()
-        } else {
-            StaticFlowBackground()
         }
     }
 
@@ -74,6 +72,8 @@ struct HomeView: View {
             }
             #endif
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
         .overlay(alignment: .topTrailing) {
             #if DEBUG
             if presentation.flowState == .idle {
@@ -85,6 +85,7 @@ struct HomeView: View {
                         .foregroundStyle(HomePalette.brandDarkGray)
                         .frame(width: 44, height: 44)
                 }
+                .buttonStyle(.plain)
                 .padding(.top, 48)
                 .padding(.trailing, 16)
                 .accessibilityLabel("Настройки")

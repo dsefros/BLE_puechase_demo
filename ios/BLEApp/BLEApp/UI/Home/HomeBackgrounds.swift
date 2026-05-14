@@ -11,6 +11,7 @@ struct AndroidParityBackground: View {
         )
         .blur(radius: 10)
         .overlay(HomePalette.overlay)
+        .allowsHitTesting(false)
     }
 }
 
