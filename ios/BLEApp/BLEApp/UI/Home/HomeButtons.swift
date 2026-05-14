@@ -9,12 +9,14 @@ struct BluePrimaryButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: 330)
                 .frame(height: 56)
                 .foregroundStyle(HomePalette.white)
                 .background(isEnabled ? HomePalette.brandOrange : HomePalette.brandOrange.opacity(0.35))
-                .clipShape(Capsule())
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
+        .buttonStyle(.plain)
         .disabled(!isEnabled)
     }
 }
