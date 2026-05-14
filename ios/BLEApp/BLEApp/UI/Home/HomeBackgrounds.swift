@@ -2,16 +2,9 @@ import SwiftUI
 
 struct AndroidParityBackground: View {
     var body: some View {
-        LottieView(
-            animationName: "background",
-            loopMode: .loop,
-            contentMode: .aspectFill,
-            autoplay: true,
-            fallback: { PaleWaveBackground() }
-        )
-        .blur(radius: 10)
-        .overlay(HomePalette.overlay)
-        .allowsHitTesting(false)
+        PaleWaveBackground()
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
     }
 }
 
