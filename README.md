@@ -44,6 +44,27 @@ Because of that, the converter now uses the least assertive behavior that is sti
 
 This means one ambiguity remains: if the formal Volna spec requires restoring leading Base36 zeroes to a fixed width, that exact width could not be proven here from concrete evidence. The behavior is isolated in `VolnaQrcIdConverter`, so changing the normalization rule later is a local change. No fixed-width Base36 length is currently assumed in the contract layer.
 
+
+## Standalone BLE payment SDKs
+
+This repository also contains standalone BLE packet-processing SDK artifacts that are intentionally separate from the demo app runtime:
+
+- Shared SDK contract: [`docs/ble-payment-sdk-contract.md`](docs/ble-payment-sdk-contract.md)
+- iOS Swift Package: [`ios/BlePaymentKit`](ios/BlePaymentKit)
+- Android Kotlin/JVM library skeleton: [`android/ble-payment-kit`](android/ble-payment-kit)
+
+These SDKs focus only on deterministic BLE packet parsing, payload extraction, validation, candidate formation, and reject reasons. They do not perform BLE scanning lifecycle management, permission handling, UI rendering, payment submission, backend networking, payment status polling, navigation, or app-specific logging.
+
+Validation commands:
+
+```bash
+swift test --package-path ios/BlePaymentKit
+cd android/ble-payment-kit && gradle test
+```
+
+Android validation may require running Gradle with JDK 17. In this container, Gradle/Kotlin tooling fails before compilation with JDK `25.0.2`.
+
+
 ## Build
 
 ```bash

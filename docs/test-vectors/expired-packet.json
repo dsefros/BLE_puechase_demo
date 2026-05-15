@@ -1,0 +1,35 @@
+{
+  "advertisementDataHex": "2280010100",
+  "scanResponseDataHex": "0000303944656D6F204D65726368616E74",
+  "manufacturerId": 61441,
+  "rssi": -60,
+  "timestamp": "2026-05-15T10:58:30Z",
+  "deviceIdentifier": "peripheral-demo-001",
+  "localName": "Volna Demo Terminal",
+  "config": {
+    "serviceUUID": "0000534B-0000-1000-8000-00805F9B34FB",
+    "supportedPacketVersion": 1,
+    "requiredCapabilityMask": "0x80",
+    "manufacturerId": "0xF001",
+    "rssiThreshold": -70,
+    "defaultMerchantName": "Терминал Волна",
+    "qrLinkPrefix": "https://qr.nspk.ru"
+  },
+  "description": "Synthetic compatibility placeholder. Current BLEApp has no packet timestamp expiry rule, so an old timestamp alone does not reject the packet.",
+  "expectedResult": "accepted",
+  "expectedRejectReason": null,
+  "expectedCandidate": {
+    "qrcId": "74",
+    "qrLink": "https://qr.nspk.ru/74",
+    "amountMinor": 12345,
+    "merchantName": "Demo Merchant",
+    "packetVersion": 1,
+    "operationCounter": 1,
+    "rssi": -60,
+    "finalRssi": -62,
+    "rssiDelta": 2,
+    "deviceIdentifier": "peripheral-demo-001",
+    "localName": "Volna Demo Terminal",
+    "timestamp": "2026-05-15T10:58:30Z"
+  }
+}

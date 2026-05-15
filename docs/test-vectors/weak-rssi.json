@@ -1,0 +1,22 @@
+{
+  "advertisementDataHex": "2280010100",
+  "scanResponseDataHex": "0000303944656D6F204D65726368616E74",
+  "manufacturerId": 61441,
+  "rssi": -73,
+  "timestamp": "2026-05-15T11:00:00Z",
+  "deviceIdentifier": "peripheral-demo-001",
+  "localName": "Volna Demo Terminal",
+  "config": {
+    "serviceUUID": "0000534B-0000-1000-8000-00805F9B34FB",
+    "supportedPacketVersion": 1,
+    "requiredCapabilityMask": "0x80",
+    "manufacturerId": "0xF001",
+    "rssiThreshold": -70,
+    "defaultMerchantName": "Терминал Волна",
+    "qrLinkPrefix": "https://qr.nspk.ru"
+  },
+  "description": "Real current-protocol signal rejection: parsed packet has rssiDelta 2, so finalRssi is below the -70 threshold.",
+  "expectedResult": "rejected",
+  "expectedRejectReason": "signalBelowThreshold",
+  "expectedCandidate": null
+}
