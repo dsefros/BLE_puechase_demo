@@ -28,6 +28,7 @@ struct HomeView: View {
                     .ignoresSafeArea()
 
                 AndroidParityBackground()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }

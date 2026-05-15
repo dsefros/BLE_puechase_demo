@@ -6,3 +6,8 @@ local.properties
 *.iml
 .DS_Store
 .kotlin/
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+
