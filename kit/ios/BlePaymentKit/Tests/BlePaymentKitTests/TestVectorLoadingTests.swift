@@ -28,9 +28,25 @@ struct TestVector: Decodable {
     let expectedCandidate: ExpectedCandidate?
 
     static func load(_ name: String) throws -> TestVector {
-        let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let url = root.appendingPathComponent("../../docs/test-vectors/\(name).json").standardizedFileURL
-        let data = try Data(contentsOf: url)
+        let fileName = "\(name).json"
+        let currentDirectory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        let sourceDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        let candidateDirectories = [
+            currentDirectory.appendingPathComponent("kit").appendingPathComponent("docs").appendingPathComponent("test-vectors"),
+            currentDirectory.appendingPathComponent("..").appendingPathComponent("..").appendingPathComponent("docs").appendingPathComponent("test-vectors"),
+            sourceDirectory.appendingPathComponent("..").appendingPathComponent("..").appendingPathComponent("..").appendingPathComponent("..").appendingPathComponent("docs").appendingPathComponent("test-vectors"),
+        ]
+
+        for directory in candidateDirectories {
+            let url = directory.appendingPathComponent(fileName).standardizedFileURL
+            if FileManager.default.fileExists(atPath: url.path) {
+                let data = try Data(contentsOf: url)
+                return try JSONDecoder().decode(TestVector.self, from: data)
+            }
+        }
+
+        let fallbackURL = candidateDirectories.last!.appendingPathComponent(fileName).standardizedFileURL
+        let data = try Data(contentsOf: fallbackURL)
         return try JSONDecoder().decode(TestVector.self, from: data)
     }
 

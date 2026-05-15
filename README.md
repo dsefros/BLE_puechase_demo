@@ -49,17 +49,20 @@ This means one ambiguity remains: if the formal Volna spec requires restoring le
 
 This repository also contains standalone BLE packet-processing SDK artifacts that are intentionally separate from the demo app runtime:
 
-- Shared SDK contract: [`docs/ble-payment-sdk-contract.md`](docs/ble-payment-sdk-contract.md)
-- iOS Swift Package: [`ios/BlePaymentKit`](ios/BlePaymentKit)
-- Android Kotlin/JVM library skeleton: [`android/ble-payment-kit`](android/ble-payment-kit)
+- SDK handoff kit: [`kit/README.md`](kit/README.md)
+- Shared SDK contract: [`kit/docs/ble-payment-sdk-contract.md`](kit/docs/ble-payment-sdk-contract.md)
+- SDK handoff notes: [`kit/docs/ble-payment-sdk-handoff.md`](kit/docs/ble-payment-sdk-handoff.md)
+- SDK artifact manifest: [`kit/docs/ble-payment-sdk-artifact-manifest.md`](kit/docs/ble-payment-sdk-artifact-manifest.md)
+- iOS Swift Package: [`kit/ios/BlePaymentKit`](kit/ios/BlePaymentKit) ([README](kit/ios/BlePaymentKit/README.md))
+- Android Kotlin/JVM library skeleton: [`kit/android/ble-payment-kit`](kit/android/ble-payment-kit) ([README](kit/android/ble-payment-kit/README.md))
 
 These SDKs focus only on deterministic BLE packet parsing, payload extraction, validation, candidate formation, and reject reasons. They do not perform BLE scanning lifecycle management, permission handling, UI rendering, payment submission, backend networking, payment status polling, navigation, or app-specific logging.
 
 Validation commands:
 
 ```bash
-swift test --package-path ios/BlePaymentKit
-cd android/ble-payment-kit && gradle test
+swift test --package-path kit/ios/BlePaymentKit
+cd kit/android/ble-payment-kit && gradle test
 ```
 
 Android validation may require running Gradle with JDK 17. In this container, Gradle/Kotlin tooling fails before compilation with JDK `25.0.2`.

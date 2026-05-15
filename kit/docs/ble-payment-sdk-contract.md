@@ -170,13 +170,13 @@ when (result) {
 From the repository root:
 
 ```bash
-swift test --package-path ios/BlePaymentKit
+swift test --package-path kit/ios/BlePaymentKit
 ```
 
 For Android:
 
 ```bash
-cd android/ble-payment-kit && gradle test
+cd kit/android/ble-payment-kit && gradle test
 ```
 
 Android validation may require JDK 17. The current container's JDK `25.0.2` causes Gradle/Kotlin tooling to fail before compilation, so Android tests should be run in a JDK 17 environment.
