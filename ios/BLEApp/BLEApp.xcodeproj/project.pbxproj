@@ -1,7 +1,8 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = {};
+	classes = {
+	};
 	objectVersion = 56;
 	objects = {
 
@@ -66,9 +67,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		201 = {
+		201 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 900;
+			containerPortal = 900 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 801;
 			remoteInfo = BLEApp;
@@ -76,242 +77,682 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		101 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEApp.swift; sourceTree = "<group>"; };
-		102 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
-		103 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		104 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
-		105 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentFlowState.swift; sourceTree = "<group>"; };
-		106 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleDeviceCandidate.swift; sourceTree = "<group>"; };
-		107 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentCandidate.swift; sourceTree = "<group>"; };
-		108 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidateSignalUseCase.swift; sourceTree = "<group>"; };
-		109 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleConfig.swift; sourceTree = "<group>"; };
-		110 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScanResult.swift; sourceTree = "<group>"; };
-		111 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerProtocol.swift; sourceTree = "<group>"; };
-		112 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerPlaceholder.swift; sourceTree = "<group>"; };
-		113 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParserPlaceholder.swift; sourceTree = "<group>"; };
-		114 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParserPlaceholder.swift; sourceTree = "<group>"; };
-		115 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrerequisitesState.swift; sourceTree = "<group>"; };
-		116 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrerequisitesCheckingPlaceholder.swift; sourceTree = "<group>"; };
-		117 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
-		118 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleConfigTests.swift; sourceTree = "<group>"; };
-		119 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		120 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBleScanner.swift; sourceTree = "<group>"; };
-		121 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleDiscoveredAdvertisement.swift; sourceTree = "<group>"; };
-		122 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerState.swift; sourceTree = "<group>"; };
-		123 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerModelTests.swift; sourceTree = "<group>"; };
-		124 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParser.swift; sourceTree = "<group>"; };
-		125 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParser.swift; sourceTree = "<group>"; };
-		126 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaQrcIdConverter.swift; sourceTree = "<group>"; };
-		127 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaCandidateAssembler.swift; sourceTree = "<group>"; };
-		128 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParserTests.swift; sourceTree = "<group>"; };
-		129 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParserTests.swift; sourceTree = "<group>"; };
-		130 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaQrcIdConverterTests.swift; sourceTree = "<group>"; };
-		131 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaCandidateAssemblerTests.swift; sourceTree = "<group>"; };
-		132 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelFlowTests.swift; sourceTree = "<group>"; };
-		133 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerStatusPresenter.swift; sourceTree = "<group>"; };
-		134 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentSubmissionServiceProtocol.swift; sourceTree = "<group>"; };
-		135 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderPaymentSubmissionService.swift; sourceTree = "<group>"; };
-		136 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerStatusPresenterTests.swift; sourceTree = "<group>"; };
-		137 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
-		138 = {isa = PBXFileReference; lastKnownFileType = text.json; path = background.json; sourceTree = "<group>"; };
-		139 = {isa = PBXFileReference; lastKnownFileType = text.json; path = bluetooth.json; sourceTree = "<group>"; };
-		140 = {isa = PBXFileReference; lastKnownFileType = text.json; path = loader.json; sourceTree = "<group>"; };
-		141 = {isa = PBXFileReference; lastKnownFileType = text.json; path = store_animated.json; sourceTree = "<group>"; };
-		142 = {isa = PBXFileReference; lastKnownFileType = text.json; path = success.json; sourceTree = "<group>"; };
-		143 = {isa = PBXFileReference; lastKnownFileType = text.json; path = failed.json; sourceTree = "<group>"; };
-		144 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenPresentation.swift; sourceTree = "<group>"; };
-		145 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDemoScenario.swift; sourceTree = "<group>"; };
-		146 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDebugViews.swift; sourceTree = "<group>"; };
-		147 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePalette.swift; sourceTree = "<group>"; };
-		148 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeBackgrounds.swift; sourceTree = "<group>"; };
-		149 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeButtons.swift; sourceTree = "<group>"; };
-		150 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeLayout.swift; sourceTree = "<group>"; };
-		151 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleWelcomeView.swift; sourceTree = "<group>"; };
-		152 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanningStateView.swift; sourceTree = "<group>"; };
-		153 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateConfirmationView.swift; sourceTree = "<group>"; };
-		154 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmittingPaymentView.swift; sourceTree = "<group>"; };
-		155 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentSuccessView.swift; sourceTree = "<group>"; };
-		156 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStateViews.swift; sourceTree = "<group>"; };
-		701 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = BLEApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		702 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BLEAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		101 /* BLEApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEApp.swift; sourceTree = "<group>"; };
+		102 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		103 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		104 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		105 /* PaymentFlowState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentFlowState.swift; sourceTree = "<group>"; };
+		106 /* BleDeviceCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleDeviceCandidate.swift; sourceTree = "<group>"; };
+		107 /* PaymentCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentCandidate.swift; sourceTree = "<group>"; };
+		108 /* ValidateSignalUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidateSignalUseCase.swift; sourceTree = "<group>"; };
+		109 /* BleConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleConfig.swift; sourceTree = "<group>"; };
+		110 /* BleScanResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScanResult.swift; sourceTree = "<group>"; };
+		111 /* BleScannerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerProtocol.swift; sourceTree = "<group>"; };
+		112 /* BleScannerPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerPlaceholder.swift; sourceTree = "<group>"; };
+		113 /* AdvertisementPacketParserPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParserPlaceholder.swift; sourceTree = "<group>"; };
+		114 /* ScanResponseParserPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParserPlaceholder.swift; sourceTree = "<group>"; };
+		115 /* PrerequisitesState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrerequisitesState.swift; sourceTree = "<group>"; };
+		116 /* PrerequisitesCheckingPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrerequisitesCheckingPlaceholder.swift; sourceTree = "<group>"; };
+		117 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		118 /* BleConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleConfigTests.swift; sourceTree = "<group>"; };
+		119 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		120 /* CoreBluetoothBleScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBleScanner.swift; sourceTree = "<group>"; };
+		121 /* BleDiscoveredAdvertisement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleDiscoveredAdvertisement.swift; sourceTree = "<group>"; };
+		122 /* BleScannerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerState.swift; sourceTree = "<group>"; };
+		123 /* BleScannerModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerModelTests.swift; sourceTree = "<group>"; };
+		124 /* AdvertisementPacketParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParser.swift; sourceTree = "<group>"; };
+		125 /* ScanResponseParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParser.swift; sourceTree = "<group>"; };
+		126 /* VolnaQrcIdConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaQrcIdConverter.swift; sourceTree = "<group>"; };
+		127 /* VolnaCandidateAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaCandidateAssembler.swift; sourceTree = "<group>"; };
+		128 /* AdvertisementPacketParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvertisementPacketParserTests.swift; sourceTree = "<group>"; };
+		129 /* ScanResponseParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResponseParserTests.swift; sourceTree = "<group>"; };
+		130 /* VolnaQrcIdConverterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaQrcIdConverterTests.swift; sourceTree = "<group>"; };
+		131 /* VolnaCandidateAssemblerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolnaCandidateAssemblerTests.swift; sourceTree = "<group>"; };
+		132 /* HomeViewModelFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelFlowTests.swift; sourceTree = "<group>"; };
+		133 /* BleScannerStatusPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerStatusPresenter.swift; sourceTree = "<group>"; };
+		134 /* PaymentSubmissionServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentSubmissionServiceProtocol.swift; sourceTree = "<group>"; };
+		135 /* PlaceholderPaymentSubmissionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderPaymentSubmissionService.swift; sourceTree = "<group>"; };
+		136 /* BleScannerStatusPresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleScannerStatusPresenterTests.swift; sourceTree = "<group>"; };
+		137 /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
+		138 /* background.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = background.json; sourceTree = "<group>"; };
+		139 /* bluetooth.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bluetooth.json; sourceTree = "<group>"; };
+		140 /* loader.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = loader.json; sourceTree = "<group>"; };
+		141 /* store_animated.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = store_animated.json; sourceTree = "<group>"; };
+		142 /* success.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = success.json; sourceTree = "<group>"; };
+		143 /* failed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = failed.json; sourceTree = "<group>"; };
+		144 /* HomeScreenPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenPresentation.swift; sourceTree = "<group>"; };
+		145 /* HomeDemoScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDemoScenario.swift; sourceTree = "<group>"; };
+		146 /* HomeDebugViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDebugViews.swift; sourceTree = "<group>"; };
+		147 /* HomePalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePalette.swift; sourceTree = "<group>"; };
+		148 /* HomeBackgrounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeBackgrounds.swift; sourceTree = "<group>"; };
+		149 /* HomeButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeButtons.swift; sourceTree = "<group>"; };
+		150 /* HomeLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeLayout.swift; sourceTree = "<group>"; };
+		151 /* IdleWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleWelcomeView.swift; sourceTree = "<group>"; };
+		152 /* ScanningStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanningStateView.swift; sourceTree = "<group>"; };
+		153 /* CandidateConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateConfirmationView.swift; sourceTree = "<group>"; };
+		154 /* SubmittingPaymentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmittingPaymentView.swift; sourceTree = "<group>"; };
+		155 /* PaymentSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentSuccessView.swift; sourceTree = "<group>"; };
+		156 /* ErrorStateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStateViews.swift; sourceTree = "<group>"; };
+		68C7DB5A2FB7711900EB9996 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		701 /* BLEApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = BLEApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		702 /* BLEAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BLEAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		501 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (044); runOnlyForDeploymentPostprocessing = 0; };
-		502 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		501 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				044 /* Lottie in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		502 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		601 = {
 			isa = PBXGroup;
-			children = (602, 603, 700);
+			children = (
+				602 /* BLEApp */,
+				603 /* BLEAppTests */,
+				700 /* Products */,
+			);
 			sourceTree = "<group>";
 		};
-		602 = {
+		602 /* BLEApp */ = {
 			isa = PBXGroup;
+			children = (
+				68C7DB5A2FB7711900EB9996 /* Info.plist */,
+				610 /* App */,
+				620 /* UI */,
+				630 /* Domain */,
+				640 /* BLE */,
+				650 /* Infrastructure */,
+				660 /* Resources */,
+				119 /* Assets.xcassets */,
+			);
 			path = BLEApp;
 			sourceTree = "<group>";
-			children = (610, 620, 630, 640, 650, 660, 119);
 		};
-		603 = { isa = PBXGroup; path = BLEAppTests; sourceTree = "<group>"; children = (118,123,128,129,130,131,132,136); };
-		610 = { isa = PBXGroup; path = App; sourceTree = "<group>"; children = (101, 102); };
-		620 = { isa = PBXGroup; path = UI; sourceTree = "<group>"; children = (621, 622); };
-		621 = { isa = PBXGroup; path = Home; sourceTree = "<group>"; children = (103, 104, 137, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156); };
-		622 = { isa = PBXGroup; path = Payment; sourceTree = "<group>"; children = (105); };
-		630 = { isa = PBXGroup; path = Domain; sourceTree = "<group>"; children = (631, 632, 633); };
-		631 = { isa = PBXGroup; path = Models; sourceTree = "<group>"; children = (106, 107); };
-		632 = { isa = PBXGroup; path = UseCases; sourceTree = "<group>"; children = (108); };
-		633 = { isa = PBXGroup; path = Payments; sourceTree = "<group>"; children = (134, 135); };
-		640 = { isa = PBXGroup; path = BLE; sourceTree = "<group>"; children = (641, 642, 643); };
-		641 = { isa = PBXGroup; path = Config; sourceTree = "<group>"; children = (109); };
-		642 = { isa = PBXGroup; path = Scanner; sourceTree = "<group>"; children = (110, 111, 112, 120, 121, 122, 133); };
-		643 = { isa = PBXGroup; path = Parser; sourceTree = "<group>"; children = (113, 114, 124, 125, 126, 127); };
-		650 = { isa = PBXGroup; path = Infrastructure; sourceTree = "<group>"; children = (651, 652); };
-		651 = { isa = PBXGroup; path = Prerequisites; sourceTree = "<group>"; children = (115, 116); };
-		652 = { isa = PBXGroup; path = Logging; sourceTree = "<group>"; children = (117); };
-		660 = { isa = PBXGroup; path = Resources; sourceTree = "<group>"; children = (661); };
-		661 = { isa = PBXGroup; path = Lottie; sourceTree = "<group>"; children = (138,139,140,141,142,143); };
-		700 = { isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (701, 702); };
+		603 /* BLEAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				118 /* BleConfigTests.swift */,
+				123 /* BleScannerModelTests.swift */,
+				128 /* AdvertisementPacketParserTests.swift */,
+				129 /* ScanResponseParserTests.swift */,
+				130 /* VolnaQrcIdConverterTests.swift */,
+				131 /* VolnaCandidateAssemblerTests.swift */,
+				132 /* HomeViewModelFlowTests.swift */,
+				136 /* BleScannerStatusPresenterTests.swift */,
+			);
+			path = BLEAppTests;
+			sourceTree = "<group>";
+		};
+		610 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				101 /* BLEApp.swift */,
+				102 /* AppContainer.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		620 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				621 /* Home */,
+				622 /* Payment */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		621 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				103 /* HomeView.swift */,
+				104 /* HomeViewModel.swift */,
+				137 /* LottieView.swift */,
+				144 /* HomeScreenPresentation.swift */,
+				145 /* HomeDemoScenario.swift */,
+				146 /* HomeDebugViews.swift */,
+				147 /* HomePalette.swift */,
+				148 /* HomeBackgrounds.swift */,
+				149 /* HomeButtons.swift */,
+				150 /* HomeLayout.swift */,
+				151 /* IdleWelcomeView.swift */,
+				152 /* ScanningStateView.swift */,
+				153 /* CandidateConfirmationView.swift */,
+				154 /* SubmittingPaymentView.swift */,
+				155 /* PaymentSuccessView.swift */,
+				156 /* ErrorStateViews.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		622 /* Payment */ = {
+			isa = PBXGroup;
+			children = (
+				105 /* PaymentFlowState.swift */,
+			);
+			path = Payment;
+			sourceTree = "<group>";
+		};
+		630 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				631 /* Models */,
+				632 /* UseCases */,
+				633 /* Payments */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		631 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				106 /* BleDeviceCandidate.swift */,
+				107 /* PaymentCandidate.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		632 /* UseCases */ = {
+			isa = PBXGroup;
+			children = (
+				108 /* ValidateSignalUseCase.swift */,
+			);
+			path = UseCases;
+			sourceTree = "<group>";
+		};
+		633 /* Payments */ = {
+			isa = PBXGroup;
+			children = (
+				134 /* PaymentSubmissionServiceProtocol.swift */,
+				135 /* PlaceholderPaymentSubmissionService.swift */,
+			);
+			path = Payments;
+			sourceTree = "<group>";
+		};
+		640 /* BLE */ = {
+			isa = PBXGroup;
+			children = (
+				641 /* Config */,
+				642 /* Scanner */,
+				643 /* Parser */,
+			);
+			path = BLE;
+			sourceTree = "<group>";
+		};
+		641 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				109 /* BleConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		642 /* Scanner */ = {
+			isa = PBXGroup;
+			children = (
+				110 /* BleScanResult.swift */,
+				111 /* BleScannerProtocol.swift */,
+				112 /* BleScannerPlaceholder.swift */,
+				120 /* CoreBluetoothBleScanner.swift */,
+				121 /* BleDiscoveredAdvertisement.swift */,
+				122 /* BleScannerState.swift */,
+				133 /* BleScannerStatusPresenter.swift */,
+			);
+			path = Scanner;
+			sourceTree = "<group>";
+		};
+		643 /* Parser */ = {
+			isa = PBXGroup;
+			children = (
+				113 /* AdvertisementPacketParserPlaceholder.swift */,
+				114 /* ScanResponseParserPlaceholder.swift */,
+				124 /* AdvertisementPacketParser.swift */,
+				125 /* ScanResponseParser.swift */,
+				126 /* VolnaQrcIdConverter.swift */,
+				127 /* VolnaCandidateAssembler.swift */,
+			);
+			path = Parser;
+			sourceTree = "<group>";
+		};
+		650 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				651 /* Prerequisites */,
+				652 /* Logging */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		651 /* Prerequisites */ = {
+			isa = PBXGroup;
+			children = (
+				115 /* PrerequisitesState.swift */,
+				116 /* PrerequisitesCheckingPlaceholder.swift */,
+			);
+			path = Prerequisites;
+			sourceTree = "<group>";
+		};
+		652 /* Logging */ = {
+			isa = PBXGroup;
+			children = (
+				117 /* AppLogger.swift */,
+			);
+			path = Logging;
+			sourceTree = "<group>";
+		};
+		660 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				661 /* Lottie */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		661 /* Lottie */ = {
+			isa = PBXGroup;
+			children = (
+				138 /* background.json */,
+				139 /* bluetooth.json */,
+				140 /* loader.json */,
+				141 /* store_animated.json */,
+				142 /* success.json */,
+				143 /* failed.json */,
+			);
+			path = Lottie;
+			sourceTree = "<group>";
+		};
+		700 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				701 /* BLEApp.app */,
+				702 /* BLEAppTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		801 = {
+		801 /* BLEApp */ = {
 			isa = PBXNativeTarget;
+			buildConfigurationList = 851 /* Build configuration list for PBXNativeTarget "BLEApp" */;
+			buildPhases = (
+				501 /* Frameworks */,
+				503 /* Sources */,
+				504 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
 			name = BLEApp;
+			packageProductDependencies = (
+				905 /* Lottie */,
+			);
 			productName = BLEApp;
-			productReference = 701;
+			productReference = 701 /* BLEApp.app */;
 			productType = "com.apple.product-type.application";
-			packageProductDependencies = (905);
-			buildConfigurationList = 851;
-			buildPhases = (501, 503, 504);
-			buildRules = ();
-			dependencies = ();
 		};
-		802 = {
+		802 /* BLEAppTests */ = {
 			isa = PBXNativeTarget;
+			buildConfigurationList = 852 /* Build configuration list for PBXNativeTarget "BLEAppTests" */;
+			buildPhases = (
+				502 /* Frameworks */,
+				505 /* Sources */,
+				506 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				803 /* PBXTargetDependency */,
+			);
 			name = BLEAppTests;
 			productName = BLEAppTests;
-			productReference = 702;
+			productReference = 702 /* BLEAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
-			buildConfigurationList = 852;
-			buildPhases = (502, 505, 506);
-			buildRules = ();
-			dependencies = (803);
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		900 = {
+		900 /* Project object */ = {
 			isa = PBXProject;
-			attributes = { LastUpgradeCheck = 1600; TargetAttributes = { 802 = { TestTargetID = 801; }; }; };
-			buildConfigurationList = 850;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					802 = {
+						TestTargetID = 801;
+					};
+				};
+			};
+			buildConfigurationList = 850 /* Build configuration list for PBXProject "BLEApp" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
-			knownRegions = (en, Base);
+			knownRegions = (
+				en,
+				Base,
+			);
 			mainGroup = 601;
-			packageReferences = (904);
-			productRefGroup = 700;
+			packageReferences = (
+				904 /* XCRemoteSwiftPackageReference "lottie-ios" */,
+			);
+			productRefGroup = 700 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (801, 802);
+			targets = (
+				801 /* BLEApp */,
+				802 /* BLEAppTests */,
+			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		504 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (019,038,039,040,041,042,043); runOnlyForDeploymentPostprocessing = 0; };
-		506 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		504 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				019 /* Assets.xcassets in Resources */,
+				038 /* background.json in Resources */,
+				039 /* bluetooth.json in Resources */,
+				040 /* loader.json in Resources */,
+				041 /* store_animated.json in Resources */,
+				042 /* success.json in Resources */,
+				043 /* failed.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		506 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		503 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (001,002,003,004,005,006,007,008,009,010,011,012,013,014,015,016,017,020,021,022,024,025,026,027,033,034,035,037,045,046,047,048,049,050,051,052,053,054,055,056,057); runOnlyForDeploymentPostprocessing = 0; };
-		505 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (018,023,028,029,030,031,032,036); runOnlyForDeploymentPostprocessing = 0; };
+		503 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				001 /* BLEApp.swift in Sources */,
+				002 /* AppContainer.swift in Sources */,
+				003 /* HomeView.swift in Sources */,
+				004 /* HomeViewModel.swift in Sources */,
+				005 /* PaymentFlowState.swift in Sources */,
+				006 /* BleDeviceCandidate.swift in Sources */,
+				007 /* PaymentCandidate.swift in Sources */,
+				008 /* ValidateSignalUseCase.swift in Sources */,
+				009 /* BleConfig.swift in Sources */,
+				010 /* BleScanResult.swift in Sources */,
+				011 /* BleScannerProtocol.swift in Sources */,
+				012 /* BleScannerPlaceholder.swift in Sources */,
+				013 /* AdvertisementPacketParserPlaceholder.swift in Sources */,
+				014 /* ScanResponseParserPlaceholder.swift in Sources */,
+				015 /* PrerequisitesState.swift in Sources */,
+				016 /* PrerequisitesCheckingPlaceholder.swift in Sources */,
+				017 /* AppLogger.swift in Sources */,
+				020 /* CoreBluetoothBleScanner.swift in Sources */,
+				021 /* BleDiscoveredAdvertisement.swift in Sources */,
+				022 /* BleScannerState.swift in Sources */,
+				024 /* AdvertisementPacketParser.swift in Sources */,
+				025 /* ScanResponseParser.swift in Sources */,
+				026 /* VolnaQrcIdConverter.swift in Sources */,
+				027 /* VolnaCandidateAssembler.swift in Sources */,
+				033 /* BleScannerStatusPresenter.swift in Sources */,
+				034 /* PaymentSubmissionServiceProtocol.swift in Sources */,
+				035 /* PlaceholderPaymentSubmissionService.swift in Sources */,
+				037 /* LottieView.swift in Sources */,
+				045 /* HomeScreenPresentation.swift in Sources */,
+				046 /* HomeDemoScenario.swift in Sources */,
+				047 /* HomeDebugViews.swift in Sources */,
+				048 /* HomePalette.swift in Sources */,
+				049 /* HomeBackgrounds.swift in Sources */,
+				050 /* HomeButtons.swift in Sources */,
+				051 /* HomeLayout.swift in Sources */,
+				052 /* IdleWelcomeView.swift in Sources */,
+				053 /* ScanningStateView.swift in Sources */,
+				054 /* CandidateConfirmationView.swift in Sources */,
+				055 /* SubmittingPaymentView.swift in Sources */,
+				056 /* PaymentSuccessView.swift in Sources */,
+				057 /* ErrorStateViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		505 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				018 /* BleConfigTests.swift in Sources */,
+				023 /* BleScannerModelTests.swift in Sources */,
+				028 /* AdvertisementPacketParserTests.swift in Sources */,
+				029 /* ScanResponseParserTests.swift in Sources */,
+				030 /* VolnaQrcIdConverterTests.swift in Sources */,
+				031 /* VolnaCandidateAssemblerTests.swift in Sources */,
+				032 /* HomeViewModelFlowTests.swift in Sources */,
+				036 /* BleScannerStatusPresenterTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		803 = {isa = PBXTargetDependency; target = 801; targetProxy = 201; };
+		803 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 801 /* BLEApp */;
+			targetProxy = 201 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
+/* Begin XCBuildConfiguration section */
+		910 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5T67FVU5Z9;
+				ENABLE_TESTABILITY = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BLEApp/Info.plist;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Bluetooth нужен для поиска ближайшего платежного устройства во время подтверждения оплаты.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ru.pervyelement.bleapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		911 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5T67FVU5Z9;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BLEApp/Info.plist;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Bluetooth нужен для поиска ближайшего платежного устройства во время подтверждения оплаты.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ru.pervyelement.bleapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		912 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VJ5R2K7DSA;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dsefros.BLEAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEApp.app/BLEApp";
+			};
+			name = Debug;
+		};
+		913 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VJ5R2K7DSA;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dsefros.BLEAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEApp.app/BLEApp";
+			};
+			name = Release;
+		};
+		914 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		915 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		850 /* Build configuration list for PBXProject "BLEApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				914 /* Debug */,
+				915 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		851 /* Build configuration list for PBXNativeTarget "BLEApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				910 /* Debug */,
+				911 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		852 /* Build configuration list for PBXNativeTarget "BLEAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				912 /* Debug */,
+				913 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
 /* Begin XCRemoteSwiftPackageReference section */
-		904 = {
+		904 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
-			requirement = { kind = upToNextMajorVersion; minimumVersion = 4.5.0; };
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.0;
+			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		905 = {
+		905 /* Lottie */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 904;
+			package = 904 /* XCRemoteSwiftPackageReference "lottie-ios" */;
 			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */
-
-/* Begin XCBuildConfiguration section */
-		910 = {
-			isa = XCBuildConfiguration;
-			name = Debug;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VJ5R2K7DSA;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to discover nearby BLE payment tags while the app is open.";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-					IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-					LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-					MARKETING_VERSION = 1.0;
-					PRODUCT_BUNDLE_IDENTIFIER = com.dsefros.BLEApp;
-					PRODUCT_NAME = "$(TARGET_NAME)";
-					SDKROOT = iphoneos;
-					SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				ENABLE_TESTABILITY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-					TARGETED_DEVICE_FAMILY = "1,2";
-				};
-			};
-			911 = {isa = XCBuildConfiguration; name = Release; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; "EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = VJ5R2K7DSA; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to discover nearby BLE payment tags while the app is open.";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.dsefros.BLEApp; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; };
-		912 = {
-			isa = XCBuildConfiguration;
-			name = Debug;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VJ5R2K7DSA;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-					LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-					MARKETING_VERSION = 1.0;
-					PRODUCT_BUNDLE_IDENTIFIER = com.dsefros.BLEAppTests;
-					PRODUCT_NAME = "$(TARGET_NAME)";
-					SDKROOT = iphoneos;
-					SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-					SWIFT_VERSION = 5.0;
-					TARGETED_DEVICE_FAMILY = "1,2";
-					TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEApp.app/BLEApp";
-				};
-			};
-			913 = {isa = XCBuildConfiguration; name = Release; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; "EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = VJ5R2K7DSA; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.dsefros.BLEAppTests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BLEApp.app/BLEApp"; }; };
-			914 = {isa = XCBuildConfiguration; name = Debug; buildSettings = { CLANG_ENABLE_MODULES = YES; "EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; }; };
-			915 = {isa = XCBuildConfiguration; name = Release; buildSettings = { CLANG_ENABLE_MODULES = YES; "EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; }; };
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		850 = {isa = XCConfigurationList; buildConfigurations = (914,915); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		851 = {isa = XCConfigurationList; buildConfigurations = (910,911); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		852 = {isa = XCConfigurationList; buildConfigurations = (912,913); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-/* End XCConfigurationList section */
 	};
-	rootObject = 900;
+	rootObject = 900 /* Project object */;
 }
