@@ -85,8 +85,8 @@ struct ErrorContent: View {
 
     var body: some View {
         ViewThatFits(in: .vertical) {
-            content(iconSize: 220, verticalSpacing: 32)
-            content(iconSize: 160, verticalSpacing: 18)
+            content(iconSize: 250, verticalSpacing: 32)
+            content(iconSize: 220, verticalSpacing: 24)
         }
     }
 
@@ -123,8 +123,8 @@ struct ErrorContent: View {
                 .lineSpacing(10)
                 .foregroundStyle(HomePalette.brandBlack)
                 .multilineTextAlignment(.center)
-                .lineLimit(4)
-                .minimumScaleFactor(0.78)
+                .lineLimit(6)
+                .minimumScaleFactor(0.9)
                 .frame(maxWidth: .infinity)
         }
     }
