@@ -27,7 +27,7 @@ The API uses plain Kotlin/JVM values (`ByteArray`, `String`, `Int`, `Instant`) r
 Run Android library tests from the repository root with:
 
 ```bash
-cd android/ble-payment-kit && gradle test
+cd kit/android/ble-payment-kit && gradle test
 ```
 
 Android validation may require JDK 17. In the current container, Gradle/Kotlin tooling fails before compilation with JDK `25.0.2`, so run this command in a JDK 17 environment if you hit that version-parsing failure.
@@ -35,5 +35,5 @@ Android validation may require JDK 17. In the current container, Gradle/Kotlin t
 The iOS companion package can be validated from the repository root with:
 
 ```bash
-swift test --package-path ios/BlePaymentKit
+swift test --package-path kit/ios/BlePaymentKit
 ```
