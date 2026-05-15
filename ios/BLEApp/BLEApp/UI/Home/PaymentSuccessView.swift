@@ -32,6 +32,7 @@ struct PaymentSuccessView: View {
                         .overlay(Text("✓").font(.system(size: 76, weight: .bold)).foregroundStyle(HomePalette.brandGreen))
                 }
             )
+            .scaleEffect(0.40)
             .frame(width: 150, height: 150)
 
             Spacer().frame(height: 64)
@@ -68,9 +69,20 @@ struct PaymentSuccessView: View {
         .opacity(isExiting ? 0 : 1)
         .scaleEffect(isExiting ? 0.001 : 1)
         .animation(.easeInOut(duration: 0.50), value: isExiting)
-        .onAppear {
+        .task {
             progress = 0
-            withAnimation(.linear(duration: 5)) { progress = 1 }
+
+            let start = Date()
+
+            while progress < 1 {
+                let elapsed = Date().timeIntervalSince(start)
+
+                progress=min(elapsed/4.5,1)
+
+                try? await Task.sleep(
+                    nanoseconds:16000000
+                )
+            }
         }
         .task {
             try? await Task.sleep(nanoseconds: 4_500_000_000)

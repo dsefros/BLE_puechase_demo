@@ -22,7 +22,7 @@ struct ScanningStateView: View {
 
                 Text("Сканирование...")
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(HomePalette.brandOrange)
+                    .foregroundStyle(HomePalette.brandBlack)
                     .multilineTextAlignment(.center)
                     .padding(.top, 32)
             }
@@ -66,7 +66,7 @@ struct DotsLoaderFallback: View {
             HStack(spacing: 10) {
                 ForEach(0..<3, id: \.self) { index in
                     Circle()
-                        .fill(HomePalette.brandOrange.opacity(activeDot == index ? 1.0 : 0.30))
+                        .fill(HomePalette.brandBlack.opacity(activeDot == index ? 1.0 : 0.30))
                         .frame(width: activeDot == index ? 14 : 11, height: activeDot == index ? 14 : 11)
                         .animation(.easeInOut(duration: 0.2), value: activeDot)
                 }

@@ -99,6 +99,7 @@ struct LottieAnimationViewRepresentable: UIViewRepresentable {
         }
 
         animationView.contentMode = contentMode.uiViewContentMode
+        animationView.transform = CGAffineTransform(scaleX: 0.72, y: 0.72)
         animationView.clipsToBounds = contentMode == .aspectFill
         animationView.loopMode = loopMode.lottieLoopMode
         animationView.animationSpeed = playbackSpeed
