@@ -81,7 +81,7 @@ struct LottieAnimationViewRepresentable: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> LottieAnimationView {
-        let animationView = LottieAnimationView()
+        let animationView = LottieAnimationView(configuration: LottieConfiguration(renderingEngine: .mainThread))
         animationView.backgroundBehavior = .pauseAndRestore
         configure(animationView, context: context)
         return animationView
@@ -122,9 +122,12 @@ struct LottieAnimationViewRepresentable: UIViewRepresentable {
         case .playOnce:
             guard !coordinator.hasStartedPlayOnce else { return }
             coordinator.hasStartedPlayOnce = true
+            animationView.currentProgress = 0
+            animationView.forceDisplayUpdate()
             animationView.play { completed in
                 if completed {
                     coordinator.hasCompletedPlayOnce = true
+                    animationView.currentProgress = 1.0
                 }
             }
         }
