@@ -1,0 +1,22 @@
+{
+  "advertisementDataHex": "4280010100",
+  "scanResponseDataHex": "0000303944656D6F204D65726368616E74",
+  "manufacturerId": 61441,
+  "rssi": -60,
+  "timestamp": "2026-05-15T11:00:00Z",
+  "deviceIdentifier": "peripheral-demo-001",
+  "localName": "Volna Demo Terminal",
+  "config": {
+    "serviceUUID": "0000534B-0000-1000-8000-00805F9B34FB",
+    "supportedPacketVersion": 1,
+    "requiredCapabilityMask": "0x80",
+    "manufacturerId": "0xF001",
+    "rssiThreshold": -70,
+    "defaultMerchantName": "Терминал Волна",
+    "qrLinkPrefix": "https://qr.nspk.ru"
+  },
+  "description": "Real current-protocol version rejection: upper three bits encode packet version 2 while configuration supports version 1.",
+  "expectedResult": "rejected",
+  "expectedRejectReason": "unsupportedVersion",
+  "expectedCandidate": null
+}
