@@ -89,7 +89,7 @@ struct HomeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .overlay(alignment: .topTrailing) {
-            if presentation.flowState == .idle {
+            if shouldShowSettingsGear {
                 Button {
                     withAnimation(.easeInOut(duration: 0.20)) { showSettings = true }
                 } label: {
@@ -108,6 +108,15 @@ struct HomeView: View {
                 .padding(.trailing, 16)
                 .accessibilityLabel("Настройки")
             }
+        }
+    }
+
+    private var shouldShowSettingsGear: Bool {
+        switch presentation.flowState {
+        case .idle, .scanning:
+            return true
+        default:
+            return false
         }
     }
 
