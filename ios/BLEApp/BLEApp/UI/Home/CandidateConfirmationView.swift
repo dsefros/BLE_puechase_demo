@@ -40,6 +40,7 @@ struct CandidateConfirmationView: View {
                             loopMode: .loop,
                             contentMode: .aspectFit,
                             autoplay: true,
+                            scale: 1.0,
                             fallback: { BluetoothHeroIcon() }
                         )
                         .frame(width: 200, height: 200)

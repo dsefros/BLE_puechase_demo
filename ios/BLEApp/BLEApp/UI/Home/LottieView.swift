@@ -36,6 +36,7 @@ struct LottieView<Fallback: View>: View {
     let contentMode: LottieContentMode
     let autoplay: Bool
     let playbackSpeed: CGFloat
+    let scale: CGFloat
     let fallback: Fallback
 
     init(
@@ -44,6 +45,7 @@ struct LottieView<Fallback: View>: View {
         contentMode: LottieContentMode = .aspectFit,
         autoplay: Bool = true,
         playbackSpeed: CGFloat = 1,
+        scale: CGFloat = 0.72,
         @ViewBuilder fallback: () -> Fallback
     ) {
         self.animationName = animationName
@@ -51,6 +53,7 @@ struct LottieView<Fallback: View>: View {
         self.contentMode = contentMode
         self.autoplay = autoplay
         self.playbackSpeed = playbackSpeed
+        self.scale = scale
         self.fallback = fallback()
     }
 
@@ -61,7 +64,8 @@ struct LottieView<Fallback: View>: View {
                 loopMode: loopMode,
                 contentMode: contentMode,
                 autoplay: autoplay,
-                playbackSpeed: playbackSpeed
+                playbackSpeed: playbackSpeed,
+                scale: scale
             )
         } else {
             fallback
@@ -75,6 +79,7 @@ struct LottieAnimationViewRepresentable: UIViewRepresentable {
     let contentMode: LottieContentMode
     let autoplay: Bool
     let playbackSpeed: CGFloat
+    let scale: CGFloat
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -99,7 +104,7 @@ struct LottieAnimationViewRepresentable: UIViewRepresentable {
         }
 
         animationView.contentMode = contentMode.uiViewContentMode
-        animationView.transform = CGAffineTransform(scaleX: 0.72, y: 0.72)
+        animationView.transform = CGAffineTransform(scaleX: scale, y: scale)
         animationView.clipsToBounds = contentMode == .aspectFill
         animationView.loopMode = loopMode.lottieLoopMode
         animationView.animationSpeed = playbackSpeed
