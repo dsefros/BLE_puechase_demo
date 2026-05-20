@@ -35,24 +35,35 @@ struct CandidateConfirmationView: View {
                     Spacer().frame(height: 24)
 
                     VStack(spacing: 0) {
-                        LottieView(
-                            animationName: "store_animated",
-                            loopMode: .loop,
-                            contentMode: .aspectFit,
-                            autoplay: true,
-                            scale: 1.0,
-                            fallback: { BluetoothHeroIcon() }
-                        )
+                        ZStack {
+                            LottieView(
+                                animationName: "store_animated",
+                                loopMode: .loop,
+                                contentMode: .aspectFit,
+                                autoplay: true,
+                                scale: 1.0,
+                                fallback: { BluetoothHeroIcon() }
+                            )
+                            .frame(width: 200, height: 200)
+                            .scaleEffect(0.37)
+                        }
                         .frame(width: 200, height: 200)
                         .padding(.bottom, 24)
 
-                        ConfirmationSection(label: "Магазин", value: candidate.merchant.isEmpty ? "—" : candidate.merchant)
+                        ConfirmationSection(
+                            label: "Магазин",
+                            value: candidate.merchant.isEmpty ? "—" : candidate.merchant
+                        )
 
                         Spacer().frame(height: 12)
                         Divider().background(HomePalette.brandLightGray)
                         Spacer().frame(height: 12)
 
-                        ConfirmationSection(label: "Сумма к оплате", value: formatAmount(candidate.amountMinor), isAmount: true)
+                        ConfirmationSection(
+                            label: "Сумма к оплате",
+                            value: formatAmount(candidate.amountMinor),
+                            isAmount: true
+                        )
                     }
                     .padding(32)
                     .frame(maxWidth: .infinity)
@@ -69,7 +80,11 @@ struct CandidateConfirmationView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             BottomCTAContainer {
-                BluePrimaryButton(title: "Оплатить \(formatAmount(candidate.amountMinor))", action: onConfirm, isEnabled: isEnabled)
+                BluePrimaryButton(
+                    title: "Оплатить \(formatAmount(candidate.amountMinor))",
+                    action: onConfirm,
+                    isEnabled: isEnabled
+                )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -87,6 +102,7 @@ struct ConfirmationSection: View {
                 .font(.system(size: 14, weight: .regular))
                 .foregroundStyle(HomePalette.brandOrange)
                 .tracking(0.5)
+
             Text(value)
                 .font(.system(size: isAmount ? 26 : 24, weight: isAmount ? .black : .bold))
                 .lineSpacing(isAmount ? 14 : 6)
