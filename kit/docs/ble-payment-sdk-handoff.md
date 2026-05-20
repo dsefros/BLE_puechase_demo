@@ -6,6 +6,7 @@ The standalone BLE Payment SDK handoff is rooted at `kit/` and can be shared as 
 
 - `kit/ios/BlePaymentKit` — standalone Swift Package for iOS/macOS packet processing.
 - `kit/android/ble-payment-kit` — standalone Kotlin/JVM library skeleton for Android-compatible packet processing.
+- `kit/android/ble-payment-integration-kit` — Android integration bundle sources (archive README, integration docs, Android ScanResult mapper/scanner reference code, examples, and copied test vectors).
 - `kit/docs/ble-payment-sdk-contract.md` — shared packet-processing API and behavior contract.
 - `kit/docs/test-vectors` — shared JSON test vectors used to validate both SDK implementations.
 

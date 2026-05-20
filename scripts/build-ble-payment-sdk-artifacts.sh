@@ -4,10 +4,12 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ios_sdk="$repo_root/kit/ios/BlePaymentKit"
 android_sdk="$repo_root/kit/android/ble-payment-kit"
+android_integration_kit="$repo_root/kit/android/ble-payment-integration-kit"
+shared_test_vectors="$repo_root/kit/docs/test-vectors"
 docs_dir="$repo_root/kit/docs"
 dist_dir="$repo_root/dist/ble-payment-sdk"
 
-for path in "$ios_sdk" "$android_sdk" "$docs_dir"; do
+for path in "$ios_sdk" "$android_sdk" "$android_integration_kit" "$shared_test_vectors" "$docs_dir"; do
   if [[ ! -d "$path" ]]; then
     echo "Missing required SDK handoff path: $path" >&2
     exit 1
@@ -27,13 +29,47 @@ mkdir -p "$dist_dir"
     -x '*/.DS_Store'
 )
 
+android_stage="$(mktemp -d)"
+trap 'rm -rf "$android_stage"' EXIT
+
+cp "$android_integration_kit/archive-root-README.md" "$android_stage/README.md"
+cp -R "$android_sdk" "$android_stage/ble-payment-kit"
+cp -R "$android_integration_kit" "$android_stage/ble-payment-integration-kit"
+rm -f "$android_stage/ble-payment-integration-kit/archive-root-README.md"
+mkdir -p "$android_stage/ble-payment-integration-kit/test-vectors"
+cp "$shared_test_vectors"/*.json "$android_stage/ble-payment-integration-kit/test-vectors/"
+rm -rf "$android_stage/ble-payment-kit/build" "$android_stage/ble-payment-kit/.gradle"
+
 (
-  cd "$repo_root/kit/android"
-  zip -qr "$dist_dir/ble-payment-kit-android-source.zip" ble-payment-kit \
-    -x 'ble-payment-kit/build/*' \
-    -x 'ble-payment-kit/.gradle/*' \
+  cd "$android_stage"
+  zip -qr "$dist_dir/ble-payment-kit-android-source.zip" \
+    README.md \
+    ble-payment-kit \
+    ble-payment-integration-kit \
     -x '*/.DS_Store'
 )
+
+required_android_entries=(
+  "README.md"
+  "ble-payment-kit/src/main/kotlin/ru/paymentguide/blepaymentkit/BlePaymentKit.kt"
+  "ble-payment-integration-kit/docs/overview.md"
+  "ble-payment-integration-kit/docs/quick-start.md"
+  "ble-payment-integration-kit/docs/scan-result-to-sdk-input.md"
+  "ble-payment-integration-kit/docs/sdk-api-contract.md"
+  "ble-payment-integration-kit/docs/packet-format.md"
+  "ble-payment-integration-kit/reference/src/main/kotlin/ru/paymentguide/blepaymentkit/integration/BlePaymentScanMapper.kt"
+  "ble-payment-integration-kit/reference/src/main/kotlin/ru/paymentguide/blepaymentkit/integration/BlePaymentScanner.kt"
+  "ble-payment-integration-kit/examples/minimal-sdk-usage.kt"
+  "ble-payment-integration-kit/test-vectors/valid-packet.json"
+)
+
+archive_listing="$(zipinfo -1 "$dist_dir/ble-payment-kit-android-source.zip")"
+for required in "${required_android_entries[@]}"; do
+  if ! grep -Fxq "$required" <<<"$archive_listing"; then
+    echo "Missing required Android integration kit entry in archive: $required" >&2
+    exit 1
+  fi
+done
 
 (
   cd "$repo_root/kit"
