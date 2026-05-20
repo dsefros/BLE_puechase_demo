@@ -2,11 +2,12 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject var viewModel: HomeViewModel
+    @AppStorage("autoScanEnabled") private var isAutoScanEnabled = false
+    @State private var showSettings = false
+    @State private var hasAttemptedAutoScanForIdleSession = false
 
     #if DEBUG
     @State private var demoScenario: HomeDemoScenario = .live
-    @State private var showSettings = false
-    @State private var isAutoScanEnabled = false
     @State private var showDeveloperPanel = false
     #endif
 
@@ -36,21 +37,33 @@ struct HomeView: View {
 
     private var foregroundContent: some View {
         Group {
-            #if DEBUG
             if showSettings {
-                AndroidParitySettingsView(
+                SettingsView(
                     isAutoScanEnabled: $isAutoScanEnabled,
-                    showDeveloperPanel: $showDeveloperPanel,
-                    onBack: { withAnimation(.easeInOut(duration: 0.20)) { showSettings = false } }
+                    onBack: closeSettings
                 )
                 .transition(.opacity)
             } else {
                 appContent
                     .transition(.opacity)
             }
-            #else
-            appContent
-            #endif
+        }
+        .animation(.easeInOut(duration: 0.20), value: showSettings)
+        .task {
+            resetAutoScanIdleAttempt()
+            attemptAutoScan()
+        }
+        .onChange(of: isAutoScanEnabled) { isEnabled in
+            handleAutoScanToggleChange(isEnabled: isEnabled)
+        }
+        .onChange(of: showSettings) { isShowingSettings in
+            if !isShowingSettings {
+                resetAutoScanIdleAttempt()
+                attemptAutoScan()
+            }
+        }
+        .onChange(of: viewModel.scannerState) { _ in
+            handleScannerStateChangeForAutoScan()
         }
     }
 
@@ -76,7 +89,6 @@ struct HomeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .overlay(alignment: .topTrailing) {
-            #if DEBUG
             if presentation.flowState == .idle {
                 Button {
                     withAnimation(.easeInOut(duration: 0.20)) { showSettings = true }
@@ -87,11 +99,15 @@ struct HomeView: View {
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
+                #if DEBUG
+                .simultaneousGesture(LongPressGesture().onEnded { _ in
+                    showDeveloperPanel.toggle()
+                })
+                #endif
                 .padding(.top, 48)
                 .padding(.trailing, 16)
                 .accessibilityLabel("Настройки")
             }
-            #endif
         }
     }
 
@@ -205,6 +221,8 @@ struct HomeView: View {
             stopScanIfLive()
         } else {
             cancelConfirmationIfLive()
+            resetAutoScanIdleAttempt()
+            attemptAutoScan()
         }
     }
 
@@ -230,6 +248,8 @@ struct HomeView: View {
         #endif
 
         cancelConfirmationIfLive()
+        resetAutoScanIdleAttempt()
+        attemptAutoScan()
     }
 
     private func handleRetryTap() {
@@ -252,6 +272,8 @@ struct HomeView: View {
         #endif
 
         closeCurrentErrorIfLive()
+        resetAutoScanIdleAttempt()
+        attemptAutoScan()
     }
 
     private func confirmPaymentIfLive() {
@@ -284,18 +306,43 @@ struct HomeView: View {
         viewModel.stopScan()
     }
 
-    private static let rubFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "RUB"
-        formatter.currencySymbol = "₽"
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        return formatter
-    }()
+    private func closeSettings() {
+        withAnimation(.easeInOut(duration: 0.20)) {
+            showSettings = false
+        }
+    }
+
+    private func handleAutoScanToggleChange(isEnabled: Bool) {
+        resetAutoScanIdleAttempt()
+        if isEnabled {
+            attemptAutoScan()
+        } else if case .scanning = presentation.flowState {
+            stopScanIfLive()
+        }
+    }
+
+    private func handleScannerStateChangeForAutoScan() {
+        guard presentation.flowState == .idle, presentation.canStartScanAction else { return }
+        resetAutoScanIdleAttempt()
+        attemptAutoScan()
+    }
+
+    private func resetAutoScanIdleAttempt() {
+        hasAttemptedAutoScanForIdleSession = false
+    }
+
+    private func attemptAutoScan() {
+        guard isAutoScanEnabled,
+              !hasAttemptedAutoScanForIdleSession,
+              !showSettings,
+              presentation.isLiveMode,
+              presentation.flowState == .idle,
+              presentation.canStartScanAction else { return }
+        hasAttemptedAutoScanForIdleSession = true
+        viewModel.startScan()
+    }
 
     func formatAmount(_ amountMinor: UInt32) -> String {
-        Self.rubFormatter.string(from: NSNumber(value: Double(amountMinor) / 100.0)) ?? "0,00 ₽"
+        RussianCurrencyFormatter.formatAmount(amountMinor)
     }
 }

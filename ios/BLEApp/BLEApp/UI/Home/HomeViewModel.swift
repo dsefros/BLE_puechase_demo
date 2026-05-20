@@ -62,6 +62,7 @@ final class HomeViewModel: ObservableObject {
 
     func startScan() {
         guard case .idle = flowState else { return }
+        container.notificationService.prepareForRealScanStart()
 
         cancelScanTimeout()
         latestValidCandidate = nil
@@ -130,8 +131,17 @@ final class HomeViewModel: ObservableObject {
         let submission = await container.paymentSubmissionService.submit(candidate: candidate)
         switch submission {
         case .success:
+            container.notificationService.notifyPaymentSuccess(
+                amount: RussianCurrencyFormatter.formatAmount(candidate.amountMinor),
+                merchant: candidate.merchant
+            )
             setFlowState(.paymentSuccess(candidate))
         case .failure(let message):
+            container.notificationService.notifyPaymentError(
+                amount: RussianCurrencyFormatter.formatAmount(candidate.amountMinor),
+                merchant: candidate.merchant,
+                error: message
+            )
             setFlowState(.paymentError(candidate, message: message))
         }
     }
@@ -250,6 +260,10 @@ final class HomeViewModel: ObservableObject {
             activeScanID = nil
             _ = container.scanner.stopScan()
             refreshScannerSnapshot()
+            container.notificationService.notifyCandidateFound(
+                amount: RussianCurrencyFormatter.formatAmount(candidate.amountMinor),
+                merchant: candidate.merchant
+            )
             setFlowState(.readyForConfirmation(candidate))
         } catch {
             setLatestParseRejection(String(describing: error))

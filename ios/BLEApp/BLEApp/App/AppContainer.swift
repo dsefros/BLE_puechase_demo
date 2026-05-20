@@ -9,6 +9,7 @@ struct AppContainer {
     let scanResponseParser: ScanResponseParser
     let candidateAssembler: VolnaCandidateAssembler
     let paymentSubmissionService: PaymentSubmissionServiceProtocol
+    let notificationService: NotificationService
 
     init(
         logger: AppLogger = AppLogger(),
@@ -18,7 +19,8 @@ struct AppContainer {
         advertisementParser: AdvertisementPacketParser = AdvertisementPacketParser(),
         scanResponseParser: ScanResponseParser = ScanResponseParser(),
         candidateAssembler: VolnaCandidateAssembler = VolnaCandidateAssembler(),
-        paymentSubmissionService: PaymentSubmissionServiceProtocol = PlaceholderPaymentSubmissionService()
+        paymentSubmissionService: PaymentSubmissionServiceProtocol = PlaceholderPaymentSubmissionService(),
+        notificationService: NotificationService = NotificationService()
     ) {
         self.logger = logger
         self.prerequisitesChecker = prerequisitesChecker
@@ -28,5 +30,6 @@ struct AppContainer {
         self.scanResponseParser = scanResponseParser
         self.candidateAssembler = candidateAssembler
         self.paymentSubmissionService = paymentSubmissionService
+        self.notificationService = notificationService
     }
 }
