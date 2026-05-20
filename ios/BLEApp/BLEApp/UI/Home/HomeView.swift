@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject var viewModel: HomeViewModel
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("autoScanEnabled") private var isAutoScanEnabled = false
     @State private var showSettings = false
     @State private var hasAttemptedAutoScanForIdleSession = false
@@ -64,6 +65,9 @@ struct HomeView: View {
         }
         .onChange(of: viewModel.scannerState) { _ in
             handleScannerStateChangeForAutoScan()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            handleScenePhaseChange(newPhase)
         }
     }
 
@@ -348,7 +352,32 @@ struct HomeView: View {
               presentation.flowState == .idle,
               presentation.canStartScanAction else { return }
         hasAttemptedAutoScanForIdleSession = true
-        viewModel.startScan()
+        viewModel.startAutoScan()
+    }
+
+    private func handleScenePhaseChange(_ phase: ScenePhase) {
+        switch phase {
+        case .active:
+            handleAppDidBecomeActive()
+        case .background:
+            handleAppDidEnterBackground()
+        case .inactive:
+            break
+        @unknown default:
+            break
+        }
+    }
+
+    private func handleAppDidEnterBackground() {
+        guard presentation.isLiveMode else { return }
+        viewModel.suspendActiveScanForAppBackground()
+        resetAutoScanIdleAttempt()
+    }
+
+    private func handleAppDidBecomeActive() {
+        guard presentation.isLiveMode else { return }
+        resetAutoScanIdleAttempt()
+        attemptAutoScan()
     }
 
     func formatAmount(_ amountMinor: UInt32) -> String {

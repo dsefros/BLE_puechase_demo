@@ -2,6 +2,10 @@ import Foundation
 
 @MainActor
 final class HomeViewModel: ObservableObject {
+    private enum ScanOrigin {
+        case manual
+        case automatic
+    }
     @Published private(set) var flowState: PaymentFlowState = .idle
     @Published private(set) var scannerState: BleScannerState = .idle
     @Published private(set) var isScanning = false
@@ -39,6 +43,7 @@ final class HomeViewModel: ObservableObject {
     private let scanTimeoutSeconds: TimeInterval
     private var scanTimeoutTask: Task<Void, Never>?
     private var activeScanID: UUID?
+    private var activeScanOrigin: ScanOrigin?
     private var lastDiagnosticsUpdate = Date.distantPast
 
     init(container: AppContainer, scanTimeoutSeconds: TimeInterval = TimeInterval(BleConfig.scanTimeoutSeconds)) {
@@ -61,6 +66,24 @@ final class HomeViewModel: ObservableObject {
     }
 
     func startScan() {
+        startScan(origin: .manual)
+    }
+
+    func startAutoScan() {
+        startScan(origin: .automatic)
+    }
+
+    func suspendActiveScanForAppBackground() {
+        guard case .scanning = flowState else { return }
+        cancelScanTimeout()
+        activeScanID = nil
+        activeScanOrigin = nil
+        _ = container.scanner.stopScan()
+        refreshScannerSnapshot()
+        setFlowState(.idle)
+    }
+
+    private func startScan(origin: ScanOrigin) {
         guard case .idle = flowState else { return }
         container.notificationService.prepareForRealScanStart()
 
@@ -70,6 +93,7 @@ final class HomeViewModel: ObservableObject {
 
         let scanID = UUID()
         activeScanID = scanID
+        activeScanOrigin = origin
 
         let result = container.scanner.startScan()
         refreshScannerSnapshot()
@@ -77,12 +101,16 @@ final class HomeViewModel: ObservableObject {
         switch result {
         case .started:
             setFlowState(.scanning)
-            scheduleScanTimeout(for: scanID)
+            if origin == .manual {
+                scheduleScanTimeout(for: scanID)
+            }
         case .stopped:
             activeScanID = nil
+            activeScanOrigin = nil
             setFlowState(.idle)
         case .unavailable(let state):
             activeScanID = nil
+            activeScanOrigin = nil
             setFlowState(scannerErrorState(for: state))
         }
 
@@ -92,6 +120,7 @@ final class HomeViewModel: ObservableObject {
     func stopScan() {
         cancelScanTimeout()
         activeScanID = nil
+        activeScanOrigin = nil
         let result = container.scanner.stopScan()
         refreshScannerSnapshot()
         if case .scanning = flowState {
@@ -126,6 +155,7 @@ final class HomeViewModel: ObservableObject {
     func confirmPayment() async {
         cancelScanTimeout()
         activeScanID = nil
+        activeScanOrigin = nil
         guard case let .readyForConfirmation(candidate) = flowState else { return }
         setFlowState(.submittingPayment(candidate))
         let submission = await container.paymentSubmissionService.submit(candidate: candidate)
@@ -153,10 +183,12 @@ final class HomeViewModel: ObservableObject {
         if isScanning {
             let scanID = UUID()
             activeScanID = scanID
+            activeScanOrigin = .manual
             setFlowState(.scanning)
             scheduleScanTimeout(for: scanID)
         } else {
             activeScanID = nil
+            activeScanOrigin = nil
             setFlowState(.idle)
         }
     }
@@ -164,6 +196,7 @@ final class HomeViewModel: ObservableObject {
     private func returnToIdle() {
         cancelScanTimeout()
         activeScanID = nil
+        activeScanOrigin = nil
         _ = container.scanner.stopScan()
         refreshScannerSnapshot()
         latestValidCandidate = nil
@@ -180,6 +213,7 @@ final class HomeViewModel: ObservableObject {
         if !isScanning, !status.canStartScan {
             cancelScanTimeout()
             activeScanID = nil
+            activeScanOrigin = nil
             setFlowState(scannerErrorState(for: state))
         }
     }
@@ -223,8 +257,10 @@ final class HomeViewModel: ObservableObject {
 
     private func handleScanTimeout(for scanID: UUID) {
         guard activeScanID == scanID, case .scanning = flowState else { return }
+        guard activeScanOrigin == .manual else { return }
         cancelScanTimeout()
         activeScanID = nil
+        activeScanOrigin = nil
         _ = container.scanner.stopScan()
         refreshScannerSnapshot()
         setFlowState(.scannerUnavailable(message: Self.scanTimeoutMessage))
@@ -258,6 +294,7 @@ final class HomeViewModel: ObservableObject {
             latestValidCandidate = candidate
             cancelScanTimeout()
             activeScanID = nil
+            activeScanOrigin = nil
             _ = container.scanner.stopScan()
             refreshScannerSnapshot()
             container.notificationService.notifyCandidateFound(
